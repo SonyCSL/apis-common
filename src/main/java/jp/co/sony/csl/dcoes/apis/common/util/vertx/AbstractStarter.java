@@ -23,7 +23,7 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	 * APIS プログラムのバージョン文字列.
 	 * 値は {@value}.
 	 */
-	public static final String APIS_VERSION = "3.0.0-a01";
+	public static final String APIS_VERSION = "3.0.0";
 
 	/**
 	 * 起動時に呼び出される.

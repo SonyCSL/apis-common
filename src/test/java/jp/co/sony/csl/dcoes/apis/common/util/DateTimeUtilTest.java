@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 import jp.co.sony.csl.dcoes.apis.common.Deal;
-import jp.co.sony.csl.dcoes.apis.common.util.DateTimeUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +36,7 @@ public class DateTimeUtilTest {
 		ZonedDateTime zdt = DateTimeUtil.toSystemDefaultZonedDateTime("1967/02/20-12:34:56");
 		String result = DateTimeUtil.toISO8601OffsetString(zdt);
 		context.assertTrue(result.startsWith("1967-02-20T12:34:56"));
-		context.assertEquals(result.length(), "1967-02-20T12:34:56".length() + "+09:00".length());
+		context.assertTrue("1967-02-20T12:34:56".length() < result.length());
 	}
 	@Test public void illegalFormatTest(TestContext context) {
 		context.assertNull(DateTimeUtil.toLocalDateTime(Deal.NULL_DATE_TIME_VALUE));

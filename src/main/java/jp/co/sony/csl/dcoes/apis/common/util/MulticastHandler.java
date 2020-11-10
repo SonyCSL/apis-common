@@ -3,9 +3,8 @@ package jp.co.sony.csl.dcoes.apis.common.util;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.util.logging.ErrorManager;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -21,8 +20,8 @@ public class MulticastHandler extends Handler {
 
 	private String groupAddress;
 	private int port;
-	private SocketAddress sendAddress;
-	private DatagramSocket sock;
+	private InetAddress sendAddress;
+	private MulticastSocket sock;
 
 	/**
 	 * インスタンス作成.
@@ -103,11 +102,13 @@ public class MulticastHandler extends Handler {
 	}
 	/**
 	 * 接続する.
-	 * @throws IOException {@link DatagramSocket#DatagramSocket()}
+	 * @throws IOException {@link MulticastSocket#MulticastSocket()}
 	 */
 	private synchronized void connect_() throws IOException {
-		sendAddress = new InetSocketAddress(groupAddress, port);
-		sock = new DatagramSocket();
+		sendAddress = InetAddress.getByName(groupAddress);
+		sock = new MulticastSocket(port);
+		sock.joinGroup(sendAddress);
+		sock.setTimeToLive(1);
 	}
 
 	/**
@@ -140,7 +141,7 @@ public class MulticastHandler extends Handler {
 			return;
 		}
 		try {
-			DatagramPacket packet = new DatagramPacket(data, data.length, sendAddress);
+			DatagramPacket packet = new DatagramPacket(data, data.length, sendAddress, port);
 			sock.send(packet);
 		} catch (Exception e) {
 			reportError(null, e, ErrorManager.WRITE_FAILURE);

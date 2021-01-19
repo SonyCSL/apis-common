@@ -1,6 +1,15 @@
 package jp.co.sony.csl.dcoes.apis.common;
 
 /**
+ * Exceptions to handle errors occurring in the tools of APIS program.
+ * Flow of program becomes incomprehensible if an error occurs in tools.
+ * Treats exceptions as dedicated exceptions and returns them to be handled by the caller.
+ * Used from 
+ * {@code jp.co.sony.csl.dcoes.apis.main.util.ErrorExceptionUtil#log(Error.Category, Error.Extent, Error.Level, String)}
+ * and
+ * {@code jp.co.sony.csl.dcoes.apis.main.util.ErrorExceptionUtil#logAndFail(Error.Category, Error.Extent, Error.Level, Throwable, Handler)}
+ * specifically.
+ * @author OES Project
  * APIS プログラムのツール中で発生するエラーを扱うための例外.
  * ツールでエラーを発しても流れがわからなくなる.
  * 専用の例外にして戻し呼び出し元で処理する.
@@ -11,6 +20,7 @@ package jp.co.sony.csl.dcoes.apis.common;
  * から使われる.
  * @author OES Project
  */
+// This may be FailureException ...
 // こっちは FailureException かな ...
 public class ErrorException extends Exception {
 
@@ -22,6 +32,12 @@ public class ErrorException extends Exception {
 	public final Error.Level level;
 
 	/**
+	 * Creates instance.
+	 * @param unitId ID of unit that generated error	 
+	 * @param category error category object
+	 * @param extent error extent object
+	 * @param level error level object
+	 * @param message error message
 	 * インスタンス作成.
 	 * @param unitId エラー生成ユニット ID
 	 * @param category エラーの category オブジェクト
@@ -38,6 +54,13 @@ public class ErrorException extends Exception {
 	}
 
 	/**
+	 * Creates instance.
+	 * @param unitId ID of unit that generated error	 
+	 * @param category error category object
+	 * @param extent error extent object
+	 * @param level error level object
+	 * @param message error message
+	 * @return errorexception object
 	 * インスタンス作成.
 	 * @param unitId エラー生成ユニット ID
 	 * @param category エラーの category オブジェクト

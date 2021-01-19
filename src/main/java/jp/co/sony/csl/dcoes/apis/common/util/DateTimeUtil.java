@@ -10,6 +10,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
+ * This is a Java datetime-related tool.
+ * @author OES Project
  * Java の日時まわりの便利ツール.
  * @author OES Project
  */
@@ -19,12 +21,19 @@ public class DateTimeUtil {
 	private DateTimeUtil() { }
 
 	/**
+	 * APIS program standard format.
+	 * uuuu/MM/dd-HH:mm:ss
 	 * APIS プログラムの標準フォーマット.
 	 * uuuu/MM/dd-HH:mm:ss
 	 */
 	private static final DateTimeFormatter LocalDateTimeFormatter_ = DateTimeFormatter.ofPattern("uuuu/MM/dd-HH:mm:ss");
 
 	/**
+	 * Gets {@link LocalDateTime} by passing string in APIS program standard format.
+	 * @param value datetime string expressed in APIS program standard format
+	 * @return passed localdatetime object
+	 *         {@code null} if {@code value} is {@code null}.
+	 *         null if passing failed.
 	 * APIS プログラムの標準フォーマット文字列をパースし {@link LocalDateTime} を取得する.
 	 * @param value APIS プログラムの標準フォーマットで表現された日時文字列
 	 * @return パースした localdatetime オブジェクト.
@@ -44,6 +53,12 @@ public class DateTimeUtil {
 		return null;
 	}
 	/**
+	 * Gets {@link ZonedDateTime} by passing string in APIS program standard format.
+	 * For time zone, sets {@link ZoneId#systemDefault() system's default time zone}.
+	 * @param value datetime string expressed in APIS program standard format
+	 * @return passed localdatetime object
+	 *         {@code null} if {@code value} is {@code null}.
+	 *         null if passing failed.
 	 * APIS プログラムの標準フォーマット文字列をパースし {@link ZonedDateTime} を取得する.
 	 * タイムゾーンは {@link ZoneId#systemDefault() システムのデフォルトタイムゾーン} をセットする.
 	 * @param value APIS プログラムの標準フォーマットで表現された日時文字列
@@ -60,6 +75,11 @@ public class DateTimeUtil {
 	}
 
 	/**
+	 * Gets {@link LocalDateTime} as string in APIS program standard format.
+	 * Example : 2020/01/20-18:48:30
+	 * @param value localdatetime object
+	 * @return string in APIS program standard format
+	 *         {@code null} if {@code value} is {@code null}.
 	 * {@link LocalDateTime} を APIS プログラムの標準フォーマットでフォーマットした文字列を取得する.
 	 * 例 : 2020/01/20-18:48:30
 	 * @param value localdatetime オブジェクト
@@ -70,6 +90,11 @@ public class DateTimeUtil {
 		return (value != null) ? LocalDateTimeFormatter_.format(value) : null;
 	}
 	/**
+	 * Gets {@link LocalTime} as string in {@link DateTimeFormatter#ISO_LOCAL_TIME} format.
+	 * Example : 18:48:30
+	 * @param value localtime object
+	 * @return string in {@link DateTimeFormatter#ISO_LOCAL_TIME} format.
+	 *         {@code null} if{@code value} is {@code null}.
 	 * {@link LocalTime} を {@link DateTimeFormatter#ISO_LOCAL_TIME} でフォーマットした文字列を取得する.
 	 * 例 : 18:48:30
 	 * @param value localtime オブジェクト
@@ -80,6 +105,11 @@ public class DateTimeUtil {
 		return (value != null) ? DateTimeFormatter.ISO_LOCAL_TIME.format(value) : null;
 	}
 	/**
+	 * Gets {@link ZonedDateTime} as string in {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} format.
+	 * Example : 2020-01-20T18:48:30+09:00
+	 * @param value zoneddatetime object
+	 * @return string in {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} format.
+	 *         {@code null} if {@code value} is {@code null}. 
 	 * {@link ZonedDateTime} を {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} でフォーマットした文字列を取得する.
 	 * 例 : 2020-01-20T18:48:30+09:00
 	 * @param value zoneddatetime オブジェクト

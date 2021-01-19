@@ -21,6 +21,8 @@ import jp.co.sony.csl.dcoes.apis.common.util.vertx.AbstractStarter;
 import jp.co.sony.csl.dcoes.apis.common.util.vertx.VertxConfig;
 
 /**
+ * Tool for encryption processing.
+ * @author OES Project
  * 暗号化処理ツール.
  * @author OES Project
  */
@@ -28,21 +30,29 @@ public class EncryptionUtil {
 	private static final Logger log = LoggerFactory.getLogger(EncryptionUtil.class);
 
 	/**
+	 * Encryption algorithm.
+	 * The value is {@value}.
 	 * 暗号化アルゴリズム.
 	 * 値は {@value}.
 	 */
 	private static final String CIPHER_TRANSFORMATION = "AES/CBC/PKCS5Padding";
 	/**
+	 * Key length.
+	 * The value is {@value}.
 	 * 鍵の長さ.
 	 * 値は {@value}.
 	 */
 	private static final int CIPHER_KEY_SIZE = 128;
 	/**
+	 * Secret key algorithm.
+	 * The value is {@value}.
 	 * 秘密鍵アルゴリズム.
 	 * 値は {@value}.
 	 */
 	private static final String CIPHER_KEY_ALGORITHM = "AES";
 	/**
+	 * Hashing algorithm used when generating key and IV from seed.
+	 * The value is {@value}.
 	 * seed から鍵と IV を生成する際に使用するハッシュアルゴリズム.
 	 * 値は {@value}.
 	 */
@@ -55,6 +65,9 @@ public class EncryptionUtil {
 	private EncryptionUtil() { }
 
 	/**
+	 * Initializes.
+	 * The default seed string is communityId-clusterId-APIS_VERSION.
+	 * @param completionHandler the completion handler
 	 * 初期化.
 	 * デフォルトの seed 文字列は communityId-clusterId-APIS_VERSION.
 	 * @param completionHandler the completion handler
@@ -78,6 +91,10 @@ public class EncryptionUtil {
 	////
 
 	/**
+	 * Gets encryption object.
+	 * Generates {@link Cipher} algorithm specified by {@link #CIPHER_TRANSFORMATION}.
+	 * @return cipher object
+	 * @throws GeneralSecurityException {@link Cipher#getInstance(String)}
 	 * 暗号化オブジェクトを取得する.
 	 * {@link #CIPHER_TRANSFORMATION} で指定されたアルゴリズムの {@link Cipher} を生成する.
 	 * @return cipher オブジェクト
@@ -87,6 +104,12 @@ public class EncryptionUtil {
 		return Cipher.getInstance(CIPHER_TRANSFORMATION);
 	}
 	/**
+	 * Gets secret key used in encryption.
+	 * Generates {@link Key} of {@link #CIPHER_KEY_SIZE} length from {@code seed}.
+	 * @param seed seed
+	 * @return key object
+	 * @throws GeneralSecurityException {@link MessageDigest#getInstance(String)},
+	 *                                  {@link SecretKeySpec#SecretKeySpec(byte[], String)}
 	 * 暗号化に使用する秘密鍵を取得する.
 	 * {@code seed} から長さ {@link #CIPHER_KEY_SIZE} の {@link Key} を生成する.
 	 * {@code seed} を {@link #HASH_ALGORITHM} でハッシュして使用する.
@@ -103,6 +126,13 @@ public class EncryptionUtil {
 		return new SecretKeySpec(bytes, CIPHER_KEY_ALGORITHM);
 	}
 	/**
+	 * Gets IV used in encryption.
+	 * Generates {@link AlgorithmParameterSpec} of {@link #CIPHER_KEY_SIZE} length from {@code seed}.
+	 * Uses {@code seed} hashed twice by {@link #HASH_ALGORITHM}.
+	 * @param seed seed
+	 * @return algorithmparameterspec object
+	 * @throws GeneralSecurityException {@link MessageDigest#getInstance(String)},
+	 *                                  {@link IvParameterSpec#IvParameterSpec(byte[])}
 	 * 暗号化に使用する IV を取得する.
 	 * {@code seed} から長さ {@link #CIPHER_KEY_SIZE} の {@link AlgorithmParameterSpec} を生成する.
 	 * {@code seed} を {@link #HASH_ALGORITHM} で二度ハッシュして使用する.
@@ -122,6 +152,15 @@ public class EncryptionUtil {
 	////
 
 	/**
+	 * Encrypts string.
+	 * Uses defaults for both encryption algorithm and seed.
+	 * @param value string to be encrypted
+	 * @return encrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 文字列を暗号化する.
 	 * 暗号化アルゴリズム、seed 共にデフォルトを用いる.
 	 * @param value 暗号化する文字列
@@ -136,6 +175,16 @@ public class EncryptionUtil {
 		return encrypt(value, null, null);
  	}
 	/**
+	 * Encrypts string.
+	 * Uses default for encryption algorithm.
+	 * @param value string to be encrypted
+	 * @param seed seed used in encryption
+	 * @return encrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 文字列を暗号化する.
 	 * 暗号化アルゴリズムはデフォルトを用いる.
 	 * @param value 暗号化する文字列
@@ -151,6 +200,16 @@ public class EncryptionUtil {
 		return encrypt(value, null, seed);
  	}
 	/**
+	 * Encrypts string.
+	 * Uses default for seed used in encryption.
+	 * @param value string to be encrypted
+	 * @param cipher encryption object 
+	 * @return encrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 文字列を暗号化する.
 	 * 暗号化に使用する seed はデフォルトを用いる.
 	 * @param value 暗号化する文字列
@@ -166,6 +225,16 @@ public class EncryptionUtil {
 		return encrypt(value, cipher, null);
  	}
 	/**
+	 * Encrypts string.
+	 * @param value string to be encrypted
+	 * @param cipher encryption object 
+	 * @param seed seed used in encryption
+	 * @return encrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 文字列を暗号化する.
 	 * @param value 暗号化する文字列
 	 * @param cipher 暗号化オブジェクト
@@ -189,6 +258,15 @@ public class EncryptionUtil {
 	}
 
 	/**
+	 * Decrypts encrypted string.
+	 * Uses defaults for both encryption algorithm and seed.
+	 * @param value encrypted string
+	 * @return decrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 暗号化された文字列を復号する.
 	 * 暗号化アルゴリズム、seed 共にデフォルトを用いる.
 	 * @param value 暗号化された文字列
@@ -203,6 +281,16 @@ public class EncryptionUtil {
 		return decrypt(value, null, null);
 	}
 	/**
+	 * Decrypts encrypted string.
+	 * Uses default for encryption algorithm.
+	 * @param value encrypted string
+	 * @param seed seed used for decryption
+	 * @return decrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 暗号化された文字列を復号する.
 	 * 暗号化アルゴリズムはデフォルトを用いる.
 	 * @param value 暗号化された文字列
@@ -218,6 +306,16 @@ public class EncryptionUtil {
 		return decrypt(value, null, seed);
  	}
 	/**
+	 * Decrypts encrypted string.
+	 * Uses default for seed used in encryption.
+	 * @param value encrypted string
+	 * @param cipher encryption object 
+	 * @return decrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 暗号化された文字列を復号する.
 	 * 暗号化に使用する seed はデフォルトを用いる.
 	 * @param value 暗号化された文字列
@@ -233,6 +331,16 @@ public class EncryptionUtil {
 		return decrypt(value, cipher, null);
  	}
 	/**
+	 * Encrypts string.
+	 * @param value encrypted string
+	 * @param cipher encryption object 
+	 * @param seed seed used for decryption
+	 * @return decrypted string
+	 * @throws GeneralSecurityException {@link #generateCipher()},
+	 *                                  {@link #generateKey(String)},
+	 *                                  {@link #generateIv(String)},
+	 *                                  {@link Cipher#init(int, Key, AlgorithmParameterSpec)},
+	 *                                  {@link Cipher#doFinal(byte[])}
 	 * 文字列を暗号化する.
 	 * @param value 暗号化された文字列
 	 * @param cipher 暗号化オブジェクト

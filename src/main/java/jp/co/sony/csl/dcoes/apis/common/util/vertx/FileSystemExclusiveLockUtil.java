@@ -21,6 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import jp.co.sony.csl.dcoes.apis.common.util.StringUtil;
 
 /**
+ * Implements exclusive control function between different processes.
+ * Uses the file system.
+ * @author OES Project
  * 異なるプロセス間の排他制御機能.
  * ファイルシステムを使う.
  * @author OES Project
@@ -31,11 +34,18 @@ public class FileSystemExclusiveLockUtil {
 	private static final JsonObjectUtil.DefaultString DEFAULT_LOCK_FILE_FORMAT = new JsonObjectUtil.DefaultString(StringUtil.TMPDIR + "/.apis.%s.lock");
 
 	/**
+	 * Creates exclusive control object within process related to this class.
+	 * Implements an exclusive lock because {@link FileLock} causes thread conflicts.
 	 * 本クラスに関するプロセス内の排他制御オブジェクト.
 	 * {@link FileLock} はスレッド競合するので排他ロックを咬ませる.
 	 */
 	private static LocalExclusiveLock exclusiveLock_ = new LocalExclusiveLock(FileSystemExclusiveLockUtil.class.getName());
 	/**
+	 * Gets exclusive control lock within process related to this class.
+	 * Receives the lock object using completionHandler's {@link AsyncResult#result()}.
+	 * @see LocalExclusiveLock#acquire(Vertx, Handler)
+	 * @param vertx vertx instance
+	 * @param completionHandler the completion handler
 	 * 本クラスに関するプロセス内の排他制御のロックを獲得する.
 	 * completionHandler の {@link AsyncResult#result()} でロックオブジェクトを受け取る.
 	 * @see LocalExclusiveLock#acquire(Vertx, Handler)
@@ -46,6 +56,9 @@ public class FileSystemExclusiveLockUtil {
 		exclusiveLock_.acquire(vertx, completionHandler);
 	}
 	/**
+	 * Resets exclusive control lock within process related to this class.
+	 * @see LocalExclusiveLock#reset(Vertx)
+	 * @param vertx vertx instance
 	 * 本クラスに関するプロセス内の排他制御のロックをリセットする.
 	 * @see LocalExclusiveLock#reset(Vertx)
 	 * @param vertx vertx インスタンス
@@ -60,6 +73,16 @@ public class FileSystemExclusiveLockUtil {
 	private FileSystemExclusiveLockUtil() { }
 
 	/**
+	 * Gets lock.
+	 * Receives true/false using completionHandler's {@link AsyncResult#result()}.
+	 * - Unlocked and lock acquisition is successful: {@code true}
+	 * - Unlocked and lock acquisition fails: {@code false}
+	 * - Locked and {@code allowAlreadyLocked} is {@code true} : {@code true}
+	 * - Locked and {@code allowAlreadyLocked} is {@code false} : {@code false}
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param allowAlreadyLocked flag indicating whether or not to assume success if lock with lock with specified name exists. Successful if {@code true}	 
+	 * @param completionHandler the completion handler
 	 * ロックを獲得する.
 	 * completionHandler の {@link AsyncResult#result()} で可否を受け取る.
 	 * - 未ロックでロック獲得成功 : {@code true}
@@ -90,6 +113,15 @@ public class FileSystemExclusiveLockUtil {
 		}
 	}
 	/**
+	 * Releases lock.
+	 * Receives result using completionHandler's {@link AsyncResult#result()}.
+	 * - Locked and lock release is successful : {@code true}
+	 * - Unlocked and {@code allowNotLocked} is {@code true} : {@code true}
+	 * - Unlocked and {@code allowNotLocked} is {@code false} : {@code false}
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param allowNotLocked flag indicating whether or not to assume success if lock with specified name does not exists. Successful if {@code true}	
+	 * @param completionHandler the completion handler
 	 * ロックを開放する.
 	 * completionHandler の {@link AsyncResult#result()} で結果を受け取る.
 	 * - ロック済でロック開放成功 : {@code true}
@@ -119,6 +151,11 @@ public class FileSystemExclusiveLockUtil {
 		}
 	}
 	/**
+	 * Confirms lock.
+	 * Receives confirmation (exists/does not exist) using completionHandler's {@link AsyncResult#result()}.
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param completionHandler the completion handler
 	 * ロックを確認する.
 	 * completionHandler の {@link AsyncResult#result()} で有無を受け取る.
 	 * @param vertx vertx インスタンス
@@ -144,6 +181,10 @@ public class FileSystemExclusiveLockUtil {
 		}
 	}
 	/**
+	 * Resets the lock function.
+	 * Fails all lock waiting processes and deletes the queue.
+	 * @param vertx vertx instance
+	 * @param completionHandler the completion handler
 	 * ロック機能をリセットする.
 	 * ロック待ち処理を全て失敗させ待ち行列を削除する.
 	 * @param vertx vertx インスタンス
@@ -167,9 +208,19 @@ public class FileSystemExclusiveLockUtil {
 	////
 
 	/**
+	 * This is the actual lock acquisition process.
+	 * Receives true/false using completionHandler's {@link AsyncResult#result()}.
+	 * - Unlocked and lock acquisition is successful : {@code true}
+	 * - Unlocked and lock acquisition fails : {@code false}
+	 * - Locked and {@code allowAlreadyLocked} is {@code true} : {@code true}
+	 * - Locked and {@code allowAlreadyLocked} is {@code false} : {@code false}
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param allowAlreadyLocked flag indicating whether or not to assume success if lock with specified name already exists. Successful if {@code true}
+	 * @param completionHandler the completion handler
 	 * ロック獲得の実処理.
 	 * completionHandler の {@link AsyncResult#result()} で可否を受け取る.
-	 * - 未ロックでロック獲得成功 : {@code true}
+ 	 * - 未ロックでロック獲得成功 : {@code true}
 	 * - 未ロックでロック獲得失敗 : {@code false}
 	 * - ロック済で {@code allowAlreadyLocked} が {@code true} : {@code true}
 	 * - ロック済で {@code allowAlreadyLocked} が {@code false} : {@code false}
@@ -215,6 +266,11 @@ public class FileSystemExclusiveLockUtil {
 		}
 	}
 	/**
+	 * Gets {@link FileChannel} which is used for locking.
+	 * Receives {@link FileChannel} object using completionHandler's {@link AsyncResult#result()} .
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param completionHandler the completion handler
 	 * ロックに使用する {@link FileChannel} を取得する.
 	 * completionHandler の {@link AsyncResult#result()} で {@link FileChannel} オブジェクトを受け取る.
 	 * @param vertx vertx インスタンス
@@ -251,6 +307,11 @@ public class FileSystemExclusiveLockUtil {
 		PATH_FORMAT_ = StringUtil.fixFilePath(s);
 	}
 	/**
+	 * If the file corresponding to specified {@code name} does not exist, creates the file and gets its {@link Path}. 
+	 * Receives {@link Path} object using completionHandler's {@link AsyncResult#result()}.
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param completionHandler the completion handler
 	 * 指定した {@code name} に対応するファイルが無ければ作りその {@link Path} を取得する.
 	 * completionHandler の {@link AsyncResult#result()} で {@link Path} オブジェクトを受け取る.
 	 * @param vertx vertx インスタンス
@@ -262,18 +323,23 @@ public class FileSystemExclusiveLockUtil {
 		vertx.fileSystem().exists(path, resExists -> {
 			if (resExists.succeeded()) {
 				if (resExists.result()) {
+					// Already exists → Successful
 					// もうある → 成功
 					completionHandler.handle(Future.succeededFuture(Paths.get(path)));
 				} else {
+					// Does not exist
 					// ない
 					if (log.isInfoEnabled()) log.info("creating lock file : " + path);
 					vertx.fileSystem().createFile(path, resCreate -> {
 						if (resCreate.succeeded()) {
+							// → Created
 							// → 作れた
 							if (log.isInfoEnabled()) log.info("chmoding lock file : " + path);
 							vertx.fileSystem().chmod(path, "rw-rw-rw-", resChmod -> {
+								// → Changes permissions because other processes open the file.
 								// → 他のプロセスも開くのでパーミッションを変えておく
 								if (resChmod.succeeded()) {
+									// → Successful
 									// → 成功
 									completionHandler.handle(Future.succeededFuture(Paths.get(path)));
 								} else {
@@ -282,13 +348,16 @@ public class FileSystemExclusiveLockUtil {
 								}
 							});
 						} else {
+							// → Could not create → Reconfirms because the file may have been created in between confirming and creating
 							// → 作れなかった → 確認してから作るまでにできた可能性があるので再確認
 							vertx.fileSystem().exists(path, resExistsAgain -> {
 								if (resExistsAgain.succeeded()) {
 									if (resExistsAgain.result()) {
+										// → File exists → Success
 										// → あった → 成功
 										completionHandler.handle(Future.succeededFuture(Paths.get(path)));
 									} else {
+										// → File does not exist after all → Error
 										// → やっぱりなかった → エラー
 										log.error(resCreate.cause());
 										completionHandler.handle(Future.failedFuture(resCreate.cause()));
@@ -309,9 +378,18 @@ public class FileSystemExclusiveLockUtil {
 	}
 
 	/**
+	 * This is the actual lock release process.
+	 * Receives result using completionHandler's {@link AsyncResult#result()}.
+	 * - Locked and lock release is successful : {@code true}
+	 * - Unlocked and  {@code allowNotLocked} is {@code true} : {@code true}
+	 * - Unlocked and  {@code allowNotLocked} is {@code false} : {@code false}
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param allowNotLocked flag indicating whether or not to assume success if lock with specified name does not exist. Successful if {@code true}
+	 * @param completionHandler the completion handler
 	 * ロック開放の実処理.
 	 * completionHandler の {@link AsyncResult#result()} で結果を受け取る.
-	 * - ロック済でロック開放成功 : {@code true}
+	 * - Locked and lock release is successful : {@code true}
 	 * - 未ロックで {@code allowNotLocked} が {@code true} : {@code true}
 	 * - 未ロックで {@code allowNotLocked} が {@code false} : {@code false}
 	 * @param vertx vertx インスタンス
@@ -360,6 +438,11 @@ public class FileSystemExclusiveLockUtil {
 	}
 
 	/**
+	 * This the actual lock confirmation process.
+	 * Receives confirmation (exist/does not exist) using completionHandler's {@link AsyncResult#result()}.
+	 * @param vertx vertx instance
+	 * @param name lock name
+	 * @param completionHandler the completion handler
 	 * ロック確認の実処理.
 	 * completionHandler の {@link AsyncResult#result()} で有無を受け取る.
 	 * @param vertx vertx インスタンス
@@ -371,6 +454,10 @@ public class FileSystemExclusiveLockUtil {
 	}
 
 	/**
+	 * This is the actual process to reset lock function.
+	 * Fails all lock waiting processes and deletes the queue.
+	 * @param vertx vertx instance
+	 * @param completionHandler the completion handler
 	 * ロック機能リセットの実処理.
 	 * ロック待ち処理を全て失敗させ待ち行列を削除する.
 	 * @param vertx vertx インスタンス

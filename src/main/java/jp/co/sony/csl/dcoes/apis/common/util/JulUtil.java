@@ -10,6 +10,8 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
+ * This is a log output-related tool.
+ * @author OES Project
  * ログ出力まわりのツール.
  * @author OES Project
  */
@@ -19,6 +21,9 @@ public class JulUtil {
 
 	private static final Map<Handler, Level> originalLevelMap_ = new HashMap<>();
 	/**
+	 * Updates {@link MulticastHandler} log level.
+	 * Returns level at time of startup if {@code value} is {@code null} .
+	 * @param value log level
 	 * {@link MulticastHandler} のログレベルを変更する.
 	 * {@code value} が {@code null} なら起動時のレベルに戻す.
 	 * @param value ログレベル
@@ -43,6 +48,10 @@ public class JulUtil {
 		}
 	}
 	/**
+	 * Updates UDP multicast log level.
+	 * Returns level at time of startup if {@code value} is {@code null}.
+	 * @param value log level
+	 * @throws IllegalArgumentException {@link Level#parse(String)}
 	 * UDP マルチキャストのログレベルを変更する.
 	 * {@code value} が {@code null} なら起動時のレベルに戻す.
 	 * @param value ログレベル
@@ -55,6 +64,9 @@ public class JulUtil {
 	//// copied from java.util.logging.LogManager
 
 	/**
+	 * Relays {@link LogManager#getProperty(String)}.
+	 * @param name property name
+	 * @return property value
 	 * {@link LogManager#getProperty(String)} の中継.
 	 * @param name property name
 	 * @return property value
@@ -64,6 +76,10 @@ public class JulUtil {
 	}
 
 	/**
+	 * Copied from {@link LogManager#getStringProperty(String, String)}.
+	 * @param name property name
+	 * @param defaultValue default value
+	 * @return property value
 	 * {@link LogManager#getStringProperty(String, String)} からコピー.
 	 * @param name property name
 	 * @param defaultValue default value
@@ -81,6 +97,10 @@ public class JulUtil {
 	}
 
 	/**
+	 * Copied from {@link LogManager#getIntProperty(String, int)}.
+	 * @param name property name
+	 * @param defaultValue default value
+	 * @return property value
 	 * {@link LogManager#getIntProperty(String, int)} からコピー.
 	 * @param name property name
 	 * @param defaultValue default value
@@ -102,6 +122,10 @@ public class JulUtil {
 	}
 
 	/**
+	 * Copied from {@link LogManager#getLevelProperty(String, Level)}.
+	 * @param name property name
+	 * @param defaultValue default value
+	 * @return property value
 	 * {@link LogManager#getLevelProperty(String, Level)} からコピー.
 	 * @param name property name
 	 * @param defaultValue default value
@@ -121,6 +145,10 @@ public class JulUtil {
 	}
 
 	/**
+	 * Copied from {@link LogManager#getFilterProperty(String, Filter)}.
+	 * @param name property name
+	 * @param defaultValue default value
+	 * @return property value
 	 * {@link LogManager#getFilterProperty(String, Filter)} からコピー.
 	 * @param name property name
 	 * @param defaultValue default value
@@ -147,6 +175,10 @@ public class JulUtil {
 	}
 
 	/**
+	 * Copied from {@link LogManager#getFormatterProperty(String, Formatter)}.
+	 * @param name property name
+	 * @param defaultValue default value
+	 * @return property value
 	 * {@link LogManager#getFormatterProperty(String, Formatter)} からコピー.
 	 * @param name property name
 	 * @param defaultValue default value

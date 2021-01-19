@@ -10,6 +10,9 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 /**
+ * This is the default implementation for restarting WatchDog.
+ * Simply executes HTTP GET for specified URL.
+ * @author OES Project
  * WatchDog 再起動のデフォルト実装.
  * 指定された URL に対し定期的に HTTP GET するだけ.
  * @author OES Project
@@ -18,11 +21,15 @@ public class WatchdogRestarting extends AbstractVerticle {
 	private static final Logger log = LoggerFactory.getLogger(WatchdogRestarting.class);
 
 	/**
+	 * This is the default cycle for restarting WatchDog.
+	 * The value is {@value}.
 	 * WatchDog を再起動する周期のデフォルト.
 	 * 値は {@value}.
 	 */
 	private static final Long DEFAULT_PERIOD_MSEC = 5000L;
 	/**
+	 * This is the default HTTP request timeout value.
+	 * The value is {@value}.
 	 * HTTP リクエストのタイムアウト時間のデフォルト.
 	 * 値は {@value}.
 	 */
@@ -34,6 +41,10 @@ public class WatchdogRestarting extends AbstractVerticle {
 	private String uri_;
 
 	/**
+	 * Called during startup.
+	 * Launches timer.
+	 * @param startFuture {@inheritDoc}
+	 * @throws Exception {@inheritDoc}
 	 * 起動時に呼び出される.
 	 * タイマを起動する.
 	 * @param startFuture {@inheritDoc}
@@ -54,6 +65,9 @@ public class WatchdogRestarting extends AbstractVerticle {
 	}
 
 	/**
+	 * Called when stopped.
+	 * Sets flag to stop timer.
+	 * @throws Exception {@inheritDoc}
 	 * 停止時に呼び出される.
 	 * タイマを止めるためのフラグを立てる.
 	 * @throws Exception {@inheritDoc}
@@ -66,6 +80,12 @@ public class WatchdogRestarting extends AbstractVerticle {
 	////
 
 	/**
+	 * Reads settings from CONFIG and initializes.
+	 * - {@code CONFIG.watchdog.enabled}
+	 * - {@code CONFIG.watchdog.host}
+	 * - {@code CONFIG.watchdog.port}
+	 * - {@code CONFIG.watchdog.uri}
+	 * @param completionHandler the completion handler
 	 * CONFIG から設定を読み込み初期化する.
 	 * - {@code CONFIG.watchdog.enabled}
 	 * - {@code CONFIG.watchdog.host}
@@ -93,6 +113,8 @@ public class WatchdogRestarting extends AbstractVerticle {
 	}
 
 	/**
+	 * Sets timer for periodically executing WatchDog restart process.
+	 * The wait time is {@code CONFIG.watchdog.periodMsec} ( default value {@link #DEFAULT_PERIOD_MSEC} ).
 	 * WatchDog 再起動処理を定期的に実行するためのタイマを設定する.
 	 * 待ち時間は {@code CONFIG.watchdog.periodMsec} ( デフォルト値 {@link #DEFAULT_PERIOD_MSEC} ).
 	 */
@@ -101,6 +123,8 @@ public class WatchdogRestarting extends AbstractVerticle {
 		setWatchdogRestartingTimer_(delay);
 	}
 	/**
+	 * Sets timer for periodically executing WatchDog restart process.
+	 * @param delay cycle [ms]
 	 * WatchDog 再起動処理を定期的に実行するためのタイマを設定する.
 	 * @param delay 周期 [ms]
 	 */
@@ -108,6 +132,8 @@ public class WatchdogRestarting extends AbstractVerticle {
 		watchdogRestartingTimerId_ = vertx.setTimer(delay, this::watchdogRestartingTimerHandler_);
 	}
 	/**
+	 * Restarts WatchDog process.
+	 * @param timerId timer ID
 	 * WatchDog 再起動処理.
 	 * @param timerId タイマ ID
 	 */
@@ -130,12 +156,17 @@ public class WatchdogRestarting extends AbstractVerticle {
 	////
 
 	/**
+	 * Periodically executes HTTP GET for specified URL.
+	 * @author OES Project
 	 * 指定された URL に対し定期的に HTTP GET するだけ.
 	 * @author OES Project
 	 */
 	private class Sender_ {
 		private boolean completed_ = false;
 		/**
+		 * Executes HTTP GET process.
+		 * (Maybe because of poor implementation) The result may be returned twice, so this is blocked here.
+		 * @param completionHandler the completion handler
 		 * HTTP GET 処理実行.
 		 * ( 実装がまずいのか ) 二度結果が返ってくることがあるためここでブロックする.
 		 * @param completionHandler the completion handler
@@ -151,6 +182,9 @@ public class WatchdogRestarting extends AbstractVerticle {
 			});
 		}
 		/**
+		 * Executes HTTP GET process.
+		 * HTTP timeout is {@code CONFIG.watchdog.enabled} ( default value {@link #DEFAULT_REQUEST_TIMEOUT_MSEC} ).
+		 * @param completionHandler the completion handler
 		 * HTTP GET 処理実行.
 		 * HTTP タイムアウト は {@code CONFIG.watchdog.enabled} ( デフォルト値 {@link #DEFAULT_REQUEST_TIMEOUT_MSEC} ).
 		 * @param completionHandler the completion handler

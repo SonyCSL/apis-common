@@ -12,6 +12,9 @@ import java.util.logging.LogRecord;
 import java.util.logging.XMLFormatter;
 
 /**
+ * This handler sends log via UDP multicast.
+ * Overall, {@link java.util.logging.SocketHandler} is used as reference.
+ * @author OES Project
  * ログを UDP マルチキャストで送信するハンドラ.
  * 全体的に {@link java.util.logging.SocketHandler} あたりを参考にした.
  * @author OES Project
@@ -24,6 +27,9 @@ public class MulticastHandler extends Handler {
 	private MulticastSocket sock;
 
 	/**
+	 * Creates instance.
+	 * @throws IOException {@link #connect_()}
+	 * @throws IllegalStateException {@link #configure_()} failure
 	 * インスタンス作成.
 	 * @throws IOException {@link #connect_()}
 	 * @throws IllegalStateException {@link #configure_()} 失敗
@@ -46,6 +52,11 @@ public class MulticastHandler extends Handler {
 	}
 
 	/**
+	 * Creates instance.
+	 * @param groupAddress multicast group address
+	 * @param port port
+	 * @throws IOException {@link #connect_()}
+	 * @throws IllegalStateException {@link #configure_()} failure
 	 * インスタンス作成.
 	 * @param groupAddress マルチキャストグループアドレス
 	 * @param port ポート
@@ -72,6 +83,9 @@ public class MulticastHandler extends Handler {
 	}
 
 	/**
+	 * Initializes.
+	 * Reads settings from property.
+	 * @throws IllegalArgumentException funny port and groupAddress values
 	 * 初期化.
 	 * プロパティから設定を読み込む.
 	 * @throws IllegalArgumentException port と groupAddress の値がおかしい
@@ -101,6 +115,8 @@ public class MulticastHandler extends Handler {
 		}
 	}
 	/**
+	 * Connects.
+	 * @throws IOException {@link MulticastSocket#MulticastSocket()}
 	 * 接続する.
 	 * @throws IOException {@link MulticastSocket#MulticastSocket()}
 	 */

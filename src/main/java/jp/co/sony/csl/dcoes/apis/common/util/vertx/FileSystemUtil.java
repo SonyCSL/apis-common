@@ -8,6 +8,8 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 /**
+ * Implements file system utility.
+ * @author OES Project
  * ファイルシステム便利機能.
  * @author OES Project
  */
@@ -17,6 +19,11 @@ public class FileSystemUtil {
 	private FileSystemUtil() { }
 
 	/**
+	 * Creates directory hierarchy using the specified path.
+	 * Returns success even if directory hierarchy already exists.
+	 * @param vertx vertx instance
+	 * @param path path
+	 * @param completionHandler the completion handler
 	 * 指定されたパスでディレクトリ階層を作る.
 	 * すでに存在していても成功を返す.
 	 * @param vertx vertx インスタンス
@@ -27,22 +34,28 @@ public class FileSystemUtil {
 		vertx.fileSystem().exists(path, resExists -> {
 			if (resExists.succeeded()) {
 				if (resExists.result()) {
+					// Already exists → Success
 					// もうある → 成功
 					completionHandler.handle(Future.succeededFuture());
 				} else {
+					// Does not exist
 					// ない
 					vertx.fileSystem().mkdirs(path, resMkdirs -> {
 						if (resMkdirs.succeeded()) {
+							// → Created → Success
 							// → 作れた → 成功
 							completionHandler.handle(Future.succeededFuture());
 						} else {
+							// → Could not create → Reconfirms because the file may have been created in between confirming and creating
 							// → 作れなかった → 確認してから作るまでにできた可能性があるので再確認
 							vertx.fileSystem().exists(path, resExistsAgain -> {
 								if (resExistsAgain.succeeded()) {
 									if (resExistsAgain.result()) {
+										// → Exists → Success
 										// → あった → 成功
 										completionHandler.handle(Future.succeededFuture());
 									} else {
+										// → File does not exist after all → Error
 										// → やっぱりなかった → エラー
 										log.error(resMkdirs.cause());
 										completionHandler.handle(Future.failedFuture(resMkdirs.cause()));

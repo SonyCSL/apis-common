@@ -22,6 +22,8 @@ import io.vertx.core.shareddata.AsyncMap;
 import jp.co.sony.csl.dcoes.apis.common.util.EncryptionUtil;
 
 /**
+ * This is a utilty for encrypting and using Vert.x's Cluster Wide Map.
+ * @author OES Project 
  * Vert.x の Cluster Wide Map を暗号化して利用するためのユーティリティ.
  * @author OES Project
  */
@@ -41,6 +43,14 @@ public class EncryptedClusterWideMapUtil {
 	}
 
 	/**
+	 * Gets instance {@link AsyncMap} which encrypts values and keeps them.
+	 * {@link EncryptionUtil#initialize(Handler) encryption processing default value} is used as the encryption process seed.
+	 * Does not encrypt if {@link VertxConfig#securityEnabled()} is {@code false}.
+	 * @param <K> the type of keys maintained by this map
+	 * @param <V> the type of mapped values
+	 * @param vertx vertx instance
+	 * @param name the name of the map
+	 * @param resultHandler the map will be returned asynchronously in this handler
 	 * 値を暗号化して保持する {@link AsyncMap} インスタンスを取得する.
 	 * 暗号処理のシードは {@link EncryptionUtil#initialize(Handler) 暗号処理系のデフォルト値} が使われる.
 	 * {@link VertxConfig#securityEnabled()} が {@code false} なら暗号化しない.
@@ -54,6 +64,14 @@ public class EncryptedClusterWideMapUtil {
 		getEncryptedClusterWideMap(vertx, name, null, resultHandler);
 	}
 	/**
+	 * Gets instance {@link AsyncMap} which encrypts values and keeps them.
+	 * Does not encrypt if {@link VertxConfig#securityEnabled()} is {@code false}.
+	 * @param <K> the type of keys maintained by this map
+	 * @param <V> the type of mapped values
+	 * @param vertx vertx instance
+	 * @param name the name of the map
+	 * @param seed seed for encryption. If {@code null} then {@link EncryptionUtil#initialize(Handler) encryption process's default value} is used.
+	 * @param resultHandler the map will be returned asynchronously in this handler
 	 * 値を暗号化して保持する {@link AsyncMap} インスタンスを取得する.
 	 * {@link VertxConfig#securityEnabled()} が {@code false} なら暗号化しない.
 	 * @param <K> the type of keys maintained by this map
@@ -86,6 +104,12 @@ public class EncryptedClusterWideMapUtil {
 	}
 
 	/**
+	 * Implements {@link AsyncMap} which encrypts and keeps content.
+	 * Encrypts string as-is.
+	 * For {@link JsonArray} and {@link JsonObject}, encrypts serialization result.
+	 * @author OES Project
+	 * @param <K> the type of keys maintained by this map
+	 * @param <V> the type of mapped values
 	 * 内容を暗号化して保持する {@link AsyncMap} 実装.
 	 * 文字列はそのまま暗号化する.
 	 * {@link JsonArray} および {@link JsonObject} はシリアライズ結果を暗号化する.
@@ -100,6 +124,10 @@ public class EncryptedClusterWideMapUtil {
 		private final String seed_;
 
 		/**
+		 * Creates instance.
+		 * @param other asyncmap wrapper object
+		 * @param seed seed
+		 * @throws GeneralSecurityException {@link EncryptionUtil#generateCipher()}
 		 * インスタンスを作成する.
 		 * @param other wrap する asyncmap オブジェクト
 		 * @param seed シード
@@ -114,6 +142,10 @@ public class EncryptedClusterWideMapUtil {
 		////
 
 		/**
+		 * Decrypts encrypted entry.
+		 * If original type is {@link JsonArray} or {@link JsonObject}, decrypts because state is serialized.
+		 * @param entry encrypted {@link String}
+		 * @param resultHandler this will be called some time later with the async result.
 		 * 暗号化されたエントリを復号する.
 		 * 元の型が {@link JsonArray} および {@link JsonObject} ならシリアライズされた状態なので復元する.
 		 * @param entry 暗号化された {@link String}
@@ -165,6 +197,12 @@ public class EncryptedClusterWideMapUtil {
 			}
 		}
 		/**
+		 * Encrypts the entry.
+		 * Encrypts {@link String} as-is.
+		 * For {@link JsonArray} and {@link JsonObject}, encrypts serialization result.
+		 * Objects in other formats are returned.
+		 * @param obj Object to be encrypted
+		 * @param resultHandler This will be called some time later with the async result.
 		 * エントリを暗号化する.
 		 * {@link String} はそのまま暗号化する.
 		 * {@link JsonArray} および {@link JsonObject} はシリアライズした結果を暗号化する.

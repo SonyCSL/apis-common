@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * スタックトレースまわりのどうってことないツール.
+ * This is a trivial stack trace-related tool.
+ * @author OES Project
+  * スタックトレースまわりのどうってことないツール.
  * @author OES Project
  */
 public class StackTraceUtil {
@@ -14,6 +16,8 @@ public class StackTraceUtil {
 	private StackTraceUtil() { }
 
 	/**
+	 * Gets the last element in stack trace of current thread.
+	 * @return last stacktraceelement object in stack trace of current thread
 	 * 現在のスレッドのスタックトレースの最後の要素を取得する.
 	 * @return 現在のスレッドのスタックトレースの最後の stacktraceelement オブジェクト
 	 */
@@ -21,6 +25,12 @@ public class StackTraceUtil {
 		return lastStackTrace(null);
 	}
 	/**
+	 * Gets the last element in stack trace of current thread.
+	 * Classes to ignore can be specified by {@code classes}.
+	 * The ignore function is used, for example, when calling in a utility object and you do not wish to include processing within the object.
+	 * @param classes array to classes to ignore
+	 * @return last stacktraceelement object in stack trace of current thread.
+	 *         Excludes processing in classes specified by {@code classes}.
 	 * 現在のスレッドのスタックトレースの最後の要素を取得する.
 	 * {@code classes} でスルーするクラスを指定できる.
 	 * スルー機能は例えばユーティリティオブジェクト中で呼び出す際にそのオブジェクト内の処理を含めたくない場合など.
@@ -38,6 +48,7 @@ public class StackTraceUtil {
 			}
 		}
 		for (StackTraceElement aSte : Thread.currentThread().getStackTrace()) {
+			// Ignores classes to be ignored
 			// スルーするクラスをスルーするー
 			if (classNames.containsKey(aSte.getClassName())) continue;
 			return aSte;
@@ -46,6 +57,8 @@ public class StackTraceUtil {
 	}
 
 	/**
+	 * Gets stack trace of current thread.
+	 * @return stack trace of current thread
 	 * 現在のスレッドのスタックトレースを取得する.
 	 * @return 現在のスレッドのスタックトレース
 	 */
@@ -53,6 +66,12 @@ public class StackTraceUtil {
 		return stackTrace(null);
 	}
 	/**
+	 * Gets stack trace of current thread.
+	 * Classes to ignore can be specified by {@code classes}.
+	 * The ignore function is used, for example, when calling in a utility object and you do not wish to include processing within the object.
+	 * @param classes array to classes to ignore
+	 * @return stack trace of current thread.
+	 *         Excludes processing in classes specified by {@code classes}.
 	 * 現在のスレッドのスタックトレースを取得する.
 	 * {@code classes} でスルーするクラスを指定できる.
 	 * スルー機能は例えばユーティリティオブジェクト中で呼び出す際にそのオブジェクト内の処理を含めたくない場合など.

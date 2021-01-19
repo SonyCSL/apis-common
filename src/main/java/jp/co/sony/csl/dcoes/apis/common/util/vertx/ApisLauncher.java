@@ -23,6 +23,9 @@ import java.util.stream.Stream;
 import jp.co.sony.csl.dcoes.apis.common.util.EncryptionUtil;
 
 /**
+ * This is the common startup class for APIS programs.
+ * It carries out tricks around encryption. 
+ * It is specified by maven-shade-plugin's {@literal <Main-Verticle>} in pom.xml.
  * APIS プログラム共通の起動クラス.
  * 暗号化まわりの細工をするため.
  * pom.xml の maven-shade-plugin の {@literal <Main-Class>} で指定してある.
@@ -32,6 +35,9 @@ public class ApisLauncher extends Launcher {
 	private static final Logger log = LoggerFactory.getLogger(ApisLauncher.class);
 
 	/**
+	 * Sets suffix to key of entry encrypted in CONFIG.
+	 * Sets suffix to encrypted file name.
+	 * The value is {@value}.
 	 * CONFIG 中の暗号化されたエントリのキー接尾辞.
 	 * 暗号化されたファイルのファイル名接尾辞.
 	 * 値は {@value}.
@@ -39,11 +45,14 @@ public class ApisLauncher extends Launcher {
 	private static final String SUFFIX_TO_DECRYPT = ".encrypted";
 
 	/**
+	 * Keeps {@link Path} to delete decrypted files later.
 	 * 復号した暗号化ファイルを後で削除するため {@link Path} を保持しておく.
 	 */
 	private List<Path> decryptedPaths_ = new ArrayList<>();
 
 	/**
+	 * Follows {@link Launcher#main(String[])} pattern.
+	 * @param args the user command line arguments.
 	 * {@link Launcher#main(String[])} を踏襲.
 	 * @param args the user command line arguments.
 	 */
@@ -51,6 +60,9 @@ public class ApisLauncher extends Launcher {
 		new ApisLauncher().dispatch(args);
 	}
 	/**
+	 * Follows {@link Launcher#executeCommand(String, String...)} pattern.
+	 * @param cmd  the command
+	 * @param args the arguments
 	 * {@link Launcher#executeCommand(String, String...)} を踏襲.
 	 * @param cmd  the command
 	 * @param args the arguments
@@ -62,6 +74,10 @@ public class ApisLauncher extends Launcher {
 	////
 
 	/**
+	 * Called after reading CONFIG files.
+	 * Decrypts encrypted strings in CONFIG.
+	 * Decrypts encrypted files
+	 * @param config {@inheritDoc}
 	 * CONFIG ファイル読み込み後に呼び出される.
 	 * CONFIG 中の暗号化された文字列を復号する.
 	 * 暗号化された各種ファイルを復号する.
@@ -75,6 +91,9 @@ public class ApisLauncher extends Launcher {
 		decryptFiles_();
 	}
 	/**
+	 * Called before starting the vertx instance.
+	 * Configures SSL for EventBus message communication.
+	 * @param options {@inheritDoc}
 	 * vertx インスタンスの起動前に呼び出される.
 	 * EventBus メッセージ通信の SSL 化を設定する.
 	 * @param options {@inheritDoc}
@@ -83,6 +102,9 @@ public class ApisLauncher extends Launcher {
 		doSecureCluster_(options);
 	}
 	/**
+	 * Called after starting vertx instance.
+	 * Deletes decrypted files.
+	 * @param vertx {@inheritDoc}
 	 * vertx インスタンスの起動後に呼び出される.
 	 * 復号した暗号化ファイルを削除する.
 	 * @param vertx {@inheritDoc}
@@ -91,6 +113,9 @@ public class ApisLauncher extends Launcher {
 		deleteDecryptedFiles_();
 	}
 	/**
+	 * Called before stopping vertx instance.
+	 * Deletes decrypted files.
+	 * @param vertx {@inheritDoc}
 	 * vertx インスタンス停止前に呼ばれる.
 	 * 復号した暗号化ファイルを削除する.
 	 * @param vertx {@inheritDoc}
@@ -99,6 +124,8 @@ public class ApisLauncher extends Launcher {
 		deleteDecryptedFiles_();
 	}
 	/**
+	 * Called after stopping vertx instance.
+	 * Deletes decrytped files.
 	 * vertx インスタンス停止後に呼ばれる.
 	 * 復号した暗号化ファイルを削除する.
 	 */
@@ -109,6 +136,10 @@ public class ApisLauncher extends Launcher {
 	////
 
 	/**
+	 * Changes the location and name of vertx-cache directory.
+	 * The default behavior of Vert.x is {@code /tmp/vertx-cache}.
+	 * {IllegalStateException: Failed to create cache dir} occurs when multiple apis-main for running the gateway unit are started in different accounts.
+	 * To avoid this, path is included in the account string.
 	 * vertx-cache ディレクトリの場所と名前を変更する.
 	 * Vert.x のデフォルト動作は {@code /tmp/vertx-cache} である.
 	 * ゲイトウェイユニット運用のため複数の apis-main を異なるアカウントで起動すると {@code java.lang.IllegalStateException: Failed to create cache dir} が起きる.
@@ -123,6 +154,8 @@ public class ApisLauncher extends Launcher {
 	}
 
 	/**
+	 * Carries out {initialization of {@link EncryptionUtil#initialize(io.vertx.core.Handler) EncryptionUtil}.
+	 * @throws RuntimeException initialization failure
 	 * {@link EncryptionUtil#initialize(io.vertx.core.Handler) EncryptionUtil を初期化}する.
 	 * @throws RuntimeException 初期化失敗
 	 */
@@ -136,6 +169,10 @@ public class ApisLauncher extends Launcher {
 	}
 
 	/**
+	 * Decrypts encrypted strings in CONFIG ( {@link JsonObject} ) entries.
+	 * For the encryption marker, key ends with suffix {@value #SUFFIX_TO_DECRYPT}.
+	 * After decryption, registers using key without suffix.
+	 * Processes recursively if value is {@link JsonArray} or {@link JsonObject}.
 	 * CONFIG ( {@link JsonObject} ) のエントリのうち暗号化された文字列を復号する.
 	 * 暗号化の目印はキーが接尾辞 {@value #SUFFIX_TO_DECRYPT} で終わっていること.
 	 * 復号したのち接尾辞を除いたキーで登録する.
@@ -149,6 +186,11 @@ public class ApisLauncher extends Launcher {
 		}
 	}
 	/**
+	 * Decrypts encrypted strings by recursively traversing {@link JsonObject}.
+	 * @param obj jsonobject object to be decrypted
+	 * @param needDecrypt decryption flag.
+	 *                    This is needed because child elements of entry with encryption marker {@value #SUFFIX_TO_DECRYPT} need to be decrypted recursively.
+	 * @return decrypted jsonobject object
 	 * {@link JsonObject} を再帰的に辿って暗号化された文字列を復号する.
 	 * @param obj 復号対象 jsonobject オブジェクト
 	 * @param needDecrypt 復号フラグ.
@@ -169,6 +211,11 @@ public class ApisLauncher extends Launcher {
 		return result;
 	}
 	/**
+	 * Decrypts encrypted strings by recursively traversing {@link JsonArray}.
+	 * @param ary jsonarray object to be decrypted
+	 * @param needDecrypt decryption flag.
+	 *                    This is needed because child elements of entry with encryption marker {@value #SUFFIX_TO_DECRYPT} need to be decrypted recursively.
+	 * @return decrypted jsonarray object
 	 * {@link JsonArray} を再帰的に辿って暗号化された文字列を復号する.
 	 * @param ary 復号対象 jsonarray オブジェクト
 	 * @param needDecrypt 復号フラグ.
@@ -183,6 +230,14 @@ public class ApisLauncher extends Launcher {
 		return result;
 	}
 	/**
+	 * Decrypts encrypted strings by recursively traversing {@link JsonArray}.
+	 * @param v object to be decrypted.
+	 *          If string, decrypts as needed in accordance with {@code needDecrypt}.
+	 *          If {@link JsonObject}, calls {@link #decrypt_(JsonObject, boolean)}.
+	 *          If {@link JsonArray}, calls {@link #decrypt_(JsonArray, boolean)}.
+	 * @param needDecrypt decryption flag.
+	 *                    This is needed because child elements of entry with encryption marker {@value #SUFFIX_TO_DECRYPT} need to be decrypted recursively.
+	 * @return Decrypted object
 	 * {@link JsonArray} を再帰的に辿って暗号化された文字列を復号する.
 	 * @param v 復号対象オブジェクト.
 	 *          文字列の場合は {@code needDecrypt} に従って必要に応じて復号する.
@@ -211,6 +266,11 @@ public class ApisLauncher extends Launcher {
 	}
 
 	/**
+	 * Decrypts encrypted files that exist in the current directory.
+	 * For the encryption marker, the file name ends in {@value #SUFFIX_TO_DECRYPT}.
+	 * After decryption, registers using the file name without suffix.
+	 * Keeps decrypted files in {@link #decryptedPaths_} to delete later.　
+	 * @throws RuntimeException decryption failure
 	 * カレントディレクトリに存在する暗号化されたファイルを復号する.
 	 * 暗号化の目印はファイル名が {@value #SUFFIX_TO_DECRYPT} で終わっていること.
 	 * 復号したのち接尾辞を除いたファイル名で登録する.
@@ -241,6 +301,9 @@ public class ApisLauncher extends Launcher {
 		}
 	}
 	/**
+	 * Deletes decrypted files.
+	 * Refers to {@link #decryptedPaths_} for files to be deleted.
+	 * @throws RuntimeException deletion failure
 	 * 復号した暗号化ファイルを削除する.
 	 * 削除対象ファイルは {@link #decryptedPaths_} を参照する.
 	 * @throws RuntimeException 削除失敗
@@ -263,6 +326,9 @@ public class ApisLauncher extends Launcher {
 	}
 
 	/**
+	 * Configures SSL for EventBus message communication.
+	 * Does nothing if {@link VertxConfig#securityEnabled()} is {@code false}.
+	 * @param options the configured Vert.x options. Modify them to customize the Vert.x instance.
 	 * EventBus メッセージ通信の SSL 化を設定する.
 	 * {@link VertxConfig#securityEnabled()} が {@code false} なら何もしない.
 	 * @param options the configured Vert.x options. Modify them to customize the Vert.x instance.

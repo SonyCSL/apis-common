@@ -13,6 +13,8 @@ import jp.co.sony.csl.dcoes.apis.common.ServiceAddress;
 import jp.co.sony.csl.dcoes.apis.common.util.JulUtil;
 
 /**
+ * This is the main common Verticle for APIS programs.
+ * @author OES Project
  * APIS プログラム共通の親玉 Verticle.
  * @author OES Project
  */
@@ -20,12 +22,19 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	private static final Logger log = LoggerFactory.getLogger(AbstractStarter.class);
 
 	/**
+	 * Sets APIS program version (string).
+	 * The value is {@value}.
 	 * APIS プログラムのバージョン文字列.
 	 * 値は {@value}.
 	 */
 	public static final String APIS_VERSION = "3.0.0";
 
 	/**
+	 * Called during startup.
+	 * Executes initialization common for APIS programs.
+	 * Calls {@link #doStart(Handler)} to execute each program's own particular startup process.
+	 * @param startFuture {@inheritDoc}
+	 * @throws Exception {@inheritDoc}
 	 * 起動時に呼び出される.
 	 * APIS プログラム共通の初期化処理を実行する.
 	 * プログラム独自の起動処理を実行するため {@link #doStart(Handler)} を呼び出す.
@@ -77,6 +86,10 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	}
 
 	/**
+	 * Called when stopped.
+	 * Calls {@link #doStop(Handler)} to execute each program's own particular stop process.
+	 * @param stopFuture {@inheritDoc}
+	 * @throws Exception {@inheritDoc}
 	 * 停止時に呼び出される.
 	 * プログラム独自の停止処理を実行するため {@link #doStop(Handler)} を呼び出す.
 	 * @param stopFuture {@inheritDoc}
@@ -97,6 +110,8 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	////
 
 	/**
+	 * Carries out APIS programs' common initialization process.
+	 * @param completionHandler the completion handler
 	 * APIS プログラム共通の初期化処理.
 	 * @param completionHandler the completion handler
 	 */
@@ -112,6 +127,8 @@ public abstract class AbstractStarter extends AbstractVerticle {
 		}
 	}
 	/**
+	 * Registers process to be called when vertx instance ends.
+	 * The purpose is to execute APIS stop process ( {@link #doShutdown(Handler)} ) even when the process is dropped by a signal.
 	 * vertx インスタンスの終了時に呼ばれる処理を登録する.
 	 * シグナルでプロセスが落とされる場合にも APIS の停止処理 ( {@link #doShutdown(Handler)} ) を実行するため.
 	 */
@@ -139,10 +156,13 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	private static final String MAP_NAME = AbstractStarter.class.getName();
 	private static final String MAP_KEY_APIS_VERSION = "apisVersion";
 	/**
+	 * Confirms that the APIS programs within the cluster are all the same.
+	 * @param completionHandler the completion handler
 	 * クラスタ内 APIS プログラムのバージョンが全て同じであることを確認する.
 	 * @param completionHandler the completion handler
 	 */
 	private void checkClusterApisVersion_(Handler<AsyncResult<Void>> completionHandler) {
+		// Creates some seed 
 		// シードは適当につくる
 		String CIPHER_SEED = VertxConfig.communityId() + '-' + VertxConfig.clusterId();
 		EncryptedClusterWideMapUtil.<String, String>getEncryptedClusterWideMap(vertx, MAP_NAME, CIPHER_SEED, resMap -> {
@@ -152,19 +172,24 @@ public abstract class AbstractStarter extends AbstractVerticle {
 					if (resPutIfAbsent.succeeded()) {
 						String existingValue = resPutIfAbsent.result();
 						if (existingValue == null) {
+							// Could be placed (there is no entry) → It was the initial cluster member → Success
 							// 置けた ( エントリがなかった ) → 最初のクラスタメンバだった → 成功
 							completionHandler.handle(Future.succeededFuture());
 						} else {
+							// Could not be placed (entry already exists)
 							// 置けなかった ( もうエントリがあった )
 							if (existingValue.equals(APIS_VERSION)) {
+								// → Same as own value (version) → Success
 								// → 自分の値 ( バージョン ) と同じ → 成功
 								completionHandler.handle(Future.succeededFuture());
 							} else {
+								// → Different than own value (version) → Fail
 								// → 自分の値 ( バージョン ) と違う → 失敗 
 								completionHandler.handle(Future.failedFuture("my APIS_VERSION : " + APIS_VERSION + " ; is different from cluster's : " + existingValue));
 							}
 						}
 					} else {
+						// The process fails in the first place → Fail
 						// そもそも処理が失敗した → 失敗
 						completionHandler.handle(Future.failedFuture(resPutIfAbsent.cause()));
 					}
@@ -178,6 +203,16 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	////
 
 	/**
+	 * Starts {@link io.vertx.core.eventbus.EventBus} service.
+	 * Address : {@link ServiceAddress#multicastLogHandlerLevel()}
+	 * Scope : Global
+	 * Process : Updates the UDP multicast log output level
+	 * Message body : Log level [{@link String}]
+	 * 　　　　　　　　   Returns to initial state if not specified
+	 * Message header : None
+	 * Response : {@code "ok"} if successful
+	 * 　　　　　   Fail if error occurs.
+	 * @param completionHandler the completion handler
 	 * {@link io.vertx.core.eventbus.EventBus} サービス起動.
 	 * アドレス : {@link ServiceAddress#multicastLogHandlerLevel()}
 	 * 範囲 : グローバル
@@ -203,6 +238,15 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	}
 
 	/**
+	 * Starts {@link io.vertx.core.eventbus.EventBus} service.
+	 * Address : {@link ServiceAddress#shutdownLocal()}
+	 * Scope : Global
+	 * Process : Shuts down.
+	 * 　　   The actual process is {@link #shutdown_()}.
+	 * Message body : None
+	 * Message header : None
+	 * Response : {@code "ok"}
+	 * @param completionHandler the completion handler
 	 * {@link io.vertx.core.eventbus.EventBus} サービス起動.
 	 * アドレス : {@link ServiceAddress#shutdownLocal()}
 	 * 範囲 : ローカル
@@ -221,6 +265,15 @@ public abstract class AbstractStarter extends AbstractVerticle {
 		}).completionHandler(completionHandler);
 	}
 	/**
+	 * Starts {@link io.vertx.core.eventbus.EventBus} service.
+	 * Address : {@link ServiceAddress#shutdownAll()}
+	 * Scope : Global
+	 * Process : Shuts down.
+	 * 　　   The actual process is {@link #shutdown_()}.
+	 * Message body : None
+	 * Message header : None
+	 * Response : {@code "ok"}
+	 * @param completionHandler the completion handler
 	 * {@link io.vertx.core.eventbus.EventBus} サービス起動.
 	 * アドレス : {@link ServiceAddress#shutdownAll()}
 	 * 範囲 : グローバル
@@ -239,6 +292,9 @@ public abstract class AbstractStarter extends AbstractVerticle {
 		}).completionHandler(completionHandler);
 	}
 	/**
+	 * This is the shutdown process.
+	 * The actual process is {@link #doShutdown(Handler)} but it is an empty implementation.
+	 * Implements in subclass as needed.
 	 * シャットダウン処理.
 	 * 実際の処理は {@link #doShutdown(Handler)} であるが空実装.
 	 * 必要に応じてサブクラスで実装する.
@@ -259,6 +315,10 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	////
 
 	/**
+	 * This is an abstract method to implement each APIS program's own particular startup process.
+	 * Called from {@link #start(Future)}.
+	 * The specific process implements in subclass.
+	 * @param completionHandler the completion handler
 	 * 各 APIS プログラム独自の起動処理を実装するための抽象メソッド.
 	 * {@link #start(Future)} から呼び出される.
 	 * 具体的な処理はサブクラスで実装する.
@@ -266,6 +326,10 @@ public abstract class AbstractStarter extends AbstractVerticle {
 	 */
 	protected abstract void doStart(Handler<AsyncResult<Void>> completionHandler);
 	/**
+	 * This is an empty emthod to implement each APIS program's own particular stop process.
+	 * Called from {@link #stop(Future)}.
+	 * Implements in subclass as needed.
+	 * @param completionHandler the completion handler
 	 * 各 APIS プログラム独自の停止処理を実装するための空メソッド.
 	 * {@link #stop(Future)} から呼び出される.
 	 * 必要に応じてサブクラスで実装する.
@@ -276,6 +340,10 @@ public abstract class AbstractStarter extends AbstractVerticle {
 		completionHandler.handle(Future.succeededFuture());
 	}
 	/**
+	 * This is an empty emthod to implement each APIS program's own particular stop process.
+	 * Called from Vert.x's closeHook or EventBus's shutdown message.
+	 * Implements in subclass as needed.
+	 * @param completionHandler the completion handler
 	 * 各 APIS プログラム独自の停止処理を実装するための空メソッド.
 	 * Vert.x の closeHook および EventBus からのシャットダウンメッセージで呼び出される.
 	 * 必要に応じてサブクラスで実装する.
@@ -286,6 +354,12 @@ public abstract class AbstractStarter extends AbstractVerticle {
 		completionHandler.handle(Future.succeededFuture());
 	}
 	/**
+	 * This is an empty method called in response to an uncaught exception. 
+	 * Implements in subclass as needed.
+	 * @param t exception to be processed
+	 * キャッチされなかった例外に対して呼び出される空メソッド.
+	 * 必要に応じてサブクラスで実装する.
+	 * @param t 処理対象の例外
 	 * キャッチされなかった例外に対して呼び出される空メソッド.
 	 * 必要に応じてサブクラスで実装する.
 	 * @param t 処理対象の例外

@@ -1,6 +1,8 @@
 package jp.co.sony.csl.dcoes.apis.common;
 
 /**
+ * Carries out unified management of {@link io.vertx.core.eventbus.EventBus} addresses.
+ * @author OES Project
  * {@link io.vertx.core.eventbus.EventBus} アドレスの一元管理.
  * @author OES Project
  */
@@ -8,7 +10,18 @@ public class ServiceAddress {
 
 	private ServiceAddress() { }
 
-	/**
+	/** Address for use in technique to ensure that units in the cluster do not have the same ID.
+	 * Scope : Global
+	 * Process : Technique to ensure that units in the cluster do not have the same ID.
+	 * 　　   Returns unit ID of own unit if message body is empty.
+	 * 　　   If there is message body and it matches own {@link io.vertx.core.AbstractVerticle#deploymentID()}, then ignores (because it is own self).
+	 * 　　   If there is message body and it does not matches own {@link io.vertx.core.AbstractVerticle#deploymentID()}, then FATAL error (it means there is another unit with same ID).
+	 * Message body : Sender {@link jp.co.sony.csl.dcoes.apis.main.app.Helo} Verticle's {@link io.vertx.core.AbstractVerticle#deploymentID()} [{@link String}]
+	 * Message header : None
+	 * Response : ID [{@link String}] of own unit if message body is empty.
+	 * 　　　　　   In all other cases, returns nothing.
+	 * @param unitId unit ID
+	 * @return address string
 	 * クラスタ内に同一 ID を持つユニットが重複しないための仕組みで使用するアドレス.
 	 * 範囲 : グローバル
 	 * 処理 : クラスタ内に同一 ID を持つユニットが重複しないための仕組み.
@@ -26,6 +39,14 @@ public class ServiceAddress {
 		return "apis." + unitId + ".helo";
 	}
 	/**
+	 * Address to get own unit's POLICY.
+	 * Scope : Local
+	 * Process : Gets own unit's POLICY.
+	 * 　　   Returns cache content, which is periodically refreshed.
+	 * Message body : None
+	 * Message header : None
+	 * Response : POLICY information [{@link io.vertx.core.json.JsonObject JsonObject}]
+	 * @return address string
 	 * 自ユニットの POLICY を取得するアドレス.
 	 * 範囲 : ローカル
 	 * 処理 : 自ユニットの POLICY を取得する.
@@ -39,6 +60,25 @@ public class ServiceAddress {
 		return "apis.policy";
 	}
 	/**
+	 * Address to set/get global Power Sharing mode.
+	 * Scope : Global
+	 * Process : Sets/gets global Power Sharing mode.
+	 * 　　   Value is one of the following.
+	 * 　　   - "autonomous"
+	 * 　　   - "heteronomous"
+	 * 　　   - "stop"
+	 * 　　   - "manual"
+	 * Message body :
+	 * 　　　　　　　　   For set : Global Power Sharing mode [{@link String}] to be set
+	 * 　　　　　　　　   For get : None
+	 * Message header : {@code "command"}
+	 * 　　　　　　　　   - {@code "set"} : Updates global Power Sharing mode
+	 * 　　　　　　　　   - {@code "get"} : Gets global Power Sharing mode
+	 * Response :
+	 * 　　　　　   For set : ID [{@link String}] of own unit
+	 * 　　　　　   For get : Current Power Sharing mode [{@link String}]
+	 * 　　　　　   Fail if error occurs.
+	 * @return address string
 	 * グローバル融通モードを set/get するアドレス.
 	 * 範囲 : グローバル
 	 * 処理 : グローバル融通モードを set/get する.
@@ -63,6 +103,16 @@ public class ServiceAddress {
 		return "apis.operationMode";
 	}
 	/**
+	 * Address to pub/sub errors.
+	 * Address : {@link ServiceAddress#error()}
+	 * Scope : Global
+	 * Process : Receives error.
+	 * 　　   - GridMaster : Keeps only global errors.
+	 * 　　   - User : Keeps only local errors of own units.
+	 * Message body : Error information [{@link io.vertx.core.json.JsonObject JsonObject}]
+	 * Message header : None
+	 * Response : None
+	 * @return address string
 	 * エラーを pub/sub するアドレス.
 	 * アドレス : {@link ServiceAddress#error()}
 	 * 範囲 : グローバル
@@ -78,6 +128,14 @@ public class ServiceAddress {
 		return "apis.error";
 	}
 	/**
+	 * Address to reset own unit.
+	 * Scope : Local
+	 * Process : Resets own unit.
+	 * Message body : None
+	 * Message header : None
+	 * Response : Own unit ID [{@link String}].
+	 * 　　　　　   Fail if error occurs.
+	 * @return address string
 	 * 自ユニットのリセットのためのアドレス.
 	 * 範囲 : ローカル
 	 * 処理 : 自ユニットをリセットする.
@@ -91,6 +149,14 @@ public class ServiceAddress {
 		return "apis.reset.local";
 	}
 	/**
+	 * Address to reset all.
+	 * Scope : Global
+	 * Process : Resets all units and all programs participating in cluster.
+	 * Message body : None
+	 * Message header : None
+	 * Response : Own unit ID [{@link String}].
+	 * 　　　　　   Fail if error occurs.
+	 * @return address string
 	 * 全体リセットのためのアドレス.
 	 * 範囲 : グローバル
 	 * 処理 : 全ユニットおよびクラスタに参加する全プログラムをリセットする.
@@ -104,6 +170,14 @@ public class ServiceAddress {
 		return "apis.reset.all";
 	}
 	/**
+	 * Address to shut down own unit.
+	 * Scope : Local
+	 * Process : Executes shutdown.
+	 * 　　   The actual process is {@link jp.co.sony.csl.dcoes.apis.common.util.vertx.AbstractStarter#shutdown_()}.
+	 * Message body : None
+	 * Message header : None
+	 * Response : {@code "ok"}
+	 * @return address string
 	 * 自ユニットのシャットダウンのためのアドレス.
 	 * 範囲 : ローカル
 	 * 処理 : シャットダウンする.
@@ -117,6 +191,14 @@ public class ServiceAddress {
 		return "apis.shutdown.local";
 	}
 	/**
+	 * Address to shut down all.
+	 * Scope : Global
+	 * Process : Executes shutdown.
+	 * 　　   The actual process is {@link jp.co.sony.csl.dcoes.apis.common.util.vertx.AbstractStarter#shutdown_()}.
+	 * Message body : None
+	 * Message header : None
+	 * Response : {@code "ok"}
+	 * @return address string
 	 * 全体シャットダウンのためのアドレス.
 	 * 範囲 : グローバル
 	 * 処理 : シャットダウンする.
@@ -130,6 +212,16 @@ public class ServiceAddress {
 		return "apis.shutdown.all";
 	}
 	/**
+	 * Address to shut down single unit with specified ID.
+	 * Scope : Global
+	 * Process : Executes shutdown.
+	 * 　　   The actual process calls {@link ServiceAddress#shutdownLocal()}.
+	 * Message body : None
+	 * Message header : None
+	 * Response : {@code "ok"}
+	 * 　　　　　   Fail if error occurs.
+	 * @param unitId ID of target unit
+	 * @return address string
 	 * ID を指定した単体シャットダウンのためのアドレス.
 	 * 範囲 : グローバル
 	 * 処理 : シャットダウンする.
@@ -139,12 +231,21 @@ public class ServiceAddress {
 	 * レスポンス : {@code "ok"}
 	 * 　　　　　   エラーが起きたら fail.
 	 * @param unitId 対象ユニットの ID
-	 * @return アドレス文字列
+	 * @return アドレス文字列	 
 	 */
 	public static String shutdown(String unitId) {
 		return "apis." + unitId + ".shutdown";
 	}
 	/**
+	 * Address to update UDP multicast log output level.
+	 * Scope : Global
+	 * Process : Updates UDP multicast log output level
+	 * Message body : Log level [{@link String}]
+	 * 　　　　　　　　   Returns original state if not specified
+	 * Message header : None
+	 * Response : {@code "ok"} if successful
+	 * 　　　　　   Fail if error occurs.
+	 * @return address string
 	 * UDP マルチキャストログ出力のレベルを変更するためのアドレス.
 	 * 範囲 : グローバル
 	 * 処理 : UDP マルチキャストログ出力のレベルを変更する
@@ -159,11 +260,22 @@ public class ServiceAddress {
 		return "apis.multicastLogHandlerLevel";
 	}
 	/**
+	 * Carries out unified management of {@link io.vertx.core.eventbus.EventBus} addresses used by Controller service.
+	 * @author OES Project
 	 * Controller サービスで使用する {@link io.vertx.core.eventbus.EventBus} アドレスの一元管理.
 	 * @author OES Project
 	 */
 	public static class Controller {
 		/**
+		 * Address to get unit data of own unit.
+		 * Scope : Local
+		 * Process : Gets unit data of own unit.
+		 * 　　   Returns fresh data by inquiring device on the spot, not cached data.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Unit data [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 自ユニットのユニットデータを取得するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 自ユニットのユニットデータを取得する.
@@ -178,6 +290,20 @@ public class ServiceAddress {
 			return "apis.Controller.data.urgent";
 		}
 		/**
+		 * Address to get unit data of own unit.
+		 * Address : {@link ServiceAddress.Controller#unitData()}
+		 * Scope : Local
+		 * Process : Gets unit data of own unit.
+		 * 　　   If urgent is specified in header, returns fresh data by inquiring device on the spot, not cached data.
+		 * 　　   If not, returns cached data, which is refreshed periodically.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "urgent"} : urgent flag
+		 * 　　　　　　　　     - {@code "true"} : returns fresh data by inquiring device on the spot
+		 * 　　　　　　　　     - {@code "false"} : returns cached data, which is refreshed periodically
+		 * Response : Unit data [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 自ユニットのユニットデータを取得するためのアドレス.
 		 * アドレス : {@link ServiceAddress.Controller#unitData()}
 		 * 範囲 : ローカル
@@ -197,6 +323,22 @@ public class ServiceAddress {
 			return "apis.Controller.data";
 		}
 		/**
+		 * Address to get unit data specified by ID.
+		 * Scope : Global
+		 * Process : Gets unit data of unit specified by ID.
+		 * 　　   If urgent is specified in header, returns fresh data by inquiring device on the spot, not cached data.
+		 * 　　   If not, returns cached data, which is refreshed periodically.
+		 * 　　   GridMasterUnitId must be specified in header and must match GridMaster interlock value.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "urgent"} : urgent flag
+		 * 　　　　　　　　     - {@code "true"} : returns fresh data by inquiring device on the spot
+		 * 　　　　　　　　     - {@code "false"} : returns cached data, which is refreshed periodically
+		 * 　　　　　　　　   - {@code "gridMasterUnitId"} : GridMaster unit ID
+		 * Response : Unit data [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定したユニットデータ取得のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : ID で指定したユニットのユニットデータを取得する.
@@ -218,6 +360,23 @@ public class ServiceAddress {
 			return "apis." + unitId + ".Controller.data";
 		}
 		/**
+		 * Address to collect unit data of all units by GridMaster.
+		 * Scope : Global
+		 * Process : Sends unit data of own unit to specified address.
+		 * 　　   Used by GridMaster's data collection process.
+		 * 　　   If urgent is specified in header, returns fresh data by inquiring device on the spot, not cached data.
+		 * 　　   If not, returns cached data, which is refreshed periodically.
+		 * 　　   GridMasterUnitId must be specified in header and must match GridMaster interlock value.
+		 * 　　   replyAddress, which sends back data, must be specified in the header.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "urgent"} : urgent flag
+		 * 　　　　　　　　     - {@code "true"} : returns fresh data by inquiring device on the spot
+		 * 　　　　　　　　     - {@code "false"} : returns cached data, which is refreshed periodically
+		 * 　　　　　　　　   - {@code "gridMasterUnitId"} : GridMaster unit ID
+		 * 　　　　　　　　   - {@code "replyAddress"} : address for sending back data
+		 * Response : None
+		 * @return address string
 		 * GridMaster が全ユニットのユニットデータを収集するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 指定されたアドレスに対し自ユニットのユニットデータを送る.
@@ -240,6 +399,15 @@ public class ServiceAddress {
 			return "apis.Controller.data.all";
 		}
 		/**
+		 * Address to get device control status of own unit.
+		 * Scope : Local
+		 * Process : Gets device control status of own unit.
+		 * 　　   Returns fresh data by inquiring device on the spot, not cached data.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Device control status [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 自ユニットのデバイス制御状態を取得するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 自ユニットのデバイス制御状態を取得する.
@@ -254,6 +422,19 @@ public class ServiceAddress {
 			return "apis.Controller.device.status.urgent";
 		}
 		/**
+		 * Address to get device control status of own unit.
+		 * Scope : Local
+		 * Process : Gets device control status of own unit.
+		 * 　　   If urgent is specified in header, returns fresh data by inquiring device on the spot, not cached data.
+		 * 　　   If not, returns cached data, which is refreshed periodically.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "urgent"} : urgent flag
+		 * 　　　　　　　　     - {@code "true"} : returns fresh data by inquiring device on the spot
+		 * 　　　　　　　　     - {@code "false"} : returns cached data, which is refreshed periodically
+		 * Response : Device control status [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 自ユニットのデバイス制御状態を取得するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 自ユニットのデバイス制御状態を取得する.
@@ -272,6 +453,22 @@ public class ServiceAddress {
 			return "apis.Controller.device.status";
 		}
 		/**
+		 * Address to get control status of device specified by ID.
+		 * Scope : Global
+		 * Process : Gets control status of device specified by ID.
+		 * 　　   If urgent is specified in header, returns fresh data by inquiring device on the spot, not cached data.
+		 * 　　   If not, returns cached data, which is refreshed periodically.
+		 * 　　   GridMasterUnitId must be specified in header and must match GridMaster interlock value.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "urgent"} : urgent flag
+		 * 　　　　　　　　     - {@code "true"} : returns fresh data by inquiring device on the spot
+		 * 　　　　　　　　     - {@code "false"} : returns cached data, which is refreshed periodically
+		 * 　　　　　　　　   - {@code "gridMasterUnitId"} : GridMaster unit ID
+		 * Response : Device control status [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定したデバイス制御状態の取得のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : ID で指定したユニットのデバイス制御状態を取得する.
@@ -293,6 +490,20 @@ public class ServiceAddress {
 			return "apis." + unitId + ".Controller.device.status";
 		}
 		/**
+		 * Address to control unit specified by ID.
+		 * Address : {@link ServiceAddress.Controller#deviceControlling(String)}
+		 * Scope : Global
+		 * Process : Controls unit specified by ID.
+		 * 　　   Sends content of control in message body.
+		 * 　　   GridMasterUnitId must be specified in header and must match GridMaster interlock value.
+		 * 　　   Specific process is implemented in child class.
+		 * Message body : command and parameters [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header :
+		 * 　　　　　　　　   - {@code "gridMasterUnitId"} : GridMaster unit ID
+		 * Response : Device control status [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定したユニット制御のためのアドレス.
 		 * アドレス : {@link ServiceAddress.Controller#deviceControlling(String)}
 		 * 範囲 : グローバル
@@ -312,6 +523,15 @@ public class ServiceAddress {
 			return "apis." + unitId + ".Controller.control.device";
 		}
 		/**
+		 * Address to stop own unit's device.
+		 * Scope : Local
+		 * Process : Stops own unit's device.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Device control status [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
+
 		 * 自ユニットのデバイスを停止するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 自ユニットのデバイスを停止する.
@@ -325,6 +545,18 @@ public class ServiceAddress {
 			return "apis.Controller.stop.local";
 		}
 		/**
+		 * Address for emergency stop.
+		 * Scope : Global
+		 * Process : Emergency stops devices of all units.
+		 * 　　   GridMaster interlock is not necessary for emergency process.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "excludeVoltageReference"} : voltage reference exclusion flag
+		 * 　　　　　　　　     - {@code "true"} : own unitが電圧リファレンスならスルーする
+		 * 　　　　　　　　     - {@code "false"} : own unitが電圧リファレンスでも停止命令を送信する
+		 * Response : Device control status [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 緊急停止のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 全ユニットのデバイスを緊急停止する.
@@ -342,6 +574,19 @@ public class ServiceAddress {
 			return "apis.Controller.scram";
 		}
 		/**
+		 * Address to carry out battery capacity management functions (confirms whether or not new Power Sharing is possible)
+		 * Scope : Local
+		 * Process : Confirms battery capacity and current Power Sharing status and determines whether or not new Power Sharing is possible.
+		 * 　　   If one battery is shared by multiple apis-main, such as for Gateway operation, coordinates management of battery capacity with other apis-main. 
+		 * 　　   At present, all apis-main that coordinate management must be on the same computer (because file system is used for coordinating management).
+		 * Message body : direction of Power Sharing [{@link String}]
+		 * 　　　　　　　　   - {@code "DISCHARGE"} : discharge
+		 * 　　　　　　　　   - {@code "CHARGE"} : charge
+		 * Message header : None
+		 * Response : {@link Boolean#TRUE} if possible or there are no battery capacity management functions
+		 * 　　　　　   {@link Boolean#FALSE} if not possible
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * バッテリ容量管理機能 ( 新しい融通が可能か否かの確認 ) のためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : バッテリ容量と現在の融通状態を確認し新しい融通が可能か否か判定する.
@@ -360,6 +605,19 @@ public class ServiceAddress {
 			return "apis.Controller.batteryCapacity.test";
 		}
 		/**
+		 * Address for battery capacity management functions ( 融通枠の確保と解放 )
+		 * Scope : Local
+		 * Process : 融通枠を確保/解放する.
+		 * 　　   If one battery is shared by multiple apis-main, such as for Gateway operation, coordinates management of battery capacity with other apis-main.
+		 * 　　   At present, all apis-main that coordinate management must be on the same computer (because file system is used for coordinating management).
+		 * Message body : Power Sharing information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header : {@code "command"}
+		 * 　　　　　　　　   - {@code "acquire"} : Secures Power Sharing frame
+		 * 　　　　　　　　   - {@code "release"} : Releases Power Sharing frame
+		 * Response : {@link Boolean#TRUE} if successful or there are no battery capacity management functions
+		 * 　　　　　   {@link Boolean#FALSE} if fail
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * バッテリ容量管理機能 ( 融通枠の確保と解放 ) のためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 融通枠を確保/解放する.
@@ -379,11 +637,25 @@ public class ServiceAddress {
 		}
 	}
 	/**
+	 * Carries out unified management of {@link io.vertx.core.eventbus.EventBus} addresses used by User service.
+	 * @author OES Project
 	 * User サービスで使用する {@link io.vertx.core.eventbus.EventBus} アドレスの一元管理.
 	 * @author OES Project
 	 */
 	public static class User {
 		/**
+		 * Address to get own unit's SCENARIO.
+		 * Specifies datetime in APIS standard format ( {@code uuuu/MM/dd-HH:mm:ss} ).
+		 * Scope : Local
+		 * Process : Gets own unit's SCENARIO.
+		 * 　　   Returns settings at specified time from periodically refreshed cache.
+		 * Message body : datetime [{@link String}]
+		 * 　　　　　　　　   APIS standard format ( uuuu/MM/dd-HH:mm:ss )
+		 * Message header : None
+		 * Response : SCENARIO subset [{@link io.vertx.core.json.JsonObject JsonObject}] at specified time
+		 * 　　　　　   Fail if not found.
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 自ユニットの SCENARIO を取得するアドレス.
 		 * APIS 標準フォーマット ( {@code uuuu/MM/dd-HH:mm:ss} ) で日時を指定する.
 		 * 範囲 : ローカル
@@ -401,6 +673,25 @@ public class ServiceAddress {
 			return "apis.User.scenario";
 		}
 		/**
+		 * Address to set/get local Power Sharing mode specified by ID.
+		 * Scope : Global
+		 * Process : Sets/gets own unit's local Power Sharing mode.
+		 * 　　   Value is one of the following.
+		 * 　　   - {@code null}
+		 * 　　   - "heteronomous"
+		 * 　　   - "stop"
+		 * Message body :
+		 * 　　　　　　　　   For set : local Power Sharing mode to be set [{@link String}]
+		 * 　　　　　　　　   For get : None
+		 * Message header : {@code "command"}
+		 * 　　　　　　　　   - {@code "set"} : Updates local Power Sharing mode
+		 * 　　　　　　　　   - {@code "get"} : Gets local Power Sharing mode
+		 * Response :
+		 * 　　　　　   For set : ID [{@link String}] of own unit
+		 * 　　　　　   For get : Current local Power Sharing mode [{@link String}]
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定したローカル融通モードを set/get するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 自ユニットのローカル融通モードを set/get する.
@@ -425,6 +716,16 @@ public class ServiceAddress {
 			return "apis." + unitId + ".operationMode";
 		}
 		/**
+		 * Address to process request from another unit.
+		 * This is the name used to relay by Mediator service.
+		 * Scope : Local
+		 * Process : Processes request from another unit.
+		 * Message body : Request [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header : None
+		 * Response : Information about acceptance of request [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * 　　　　　   {@code null} if not accepted
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 他ユニットからのリクエストを処理するためのアドレス.
 		 * Mediator サービスが中継するためこんな名前.
 		 * 範囲 : ローカル
@@ -440,6 +741,18 @@ public class ServiceAddress {
 			return "apis.User.mediatorRequest";
 		}
 		/**
+		 * Address to process group of accepts for request issued by own unit.
+		 * This is the name used to relay by Mediator service.
+		 * Scope : Local
+		 * Process : Processes group of accepts for request issued by own unit.
+		 * Message body : Request and group of accepts [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * 　　　　　　　　   - {@code "request"} : Request information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * 　　　　　　　　   - {@code "accepts"} : List of accept information [{@link io.vertx.core.json.JsonArray JsonArray}]
+		 * Message header : None
+		 * Response : Accept information about selected result [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * 　　　　　   {@code null} if accepts are not selected
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 自ユニットが発したリクエストに対するアクセプト群を処理するためのアドレス.
 		 * Mediator サービスが中継するためこんな名前.
 		 * 範囲 : ローカル
@@ -457,6 +770,15 @@ public class ServiceAddress {
 			return "apis.User.mediatorAccepts";
 		}
 		/**
+		 * Address to confirm existence of errors in unit specified by ID.
+		 * Address : {@link ServiceAddress.User#errorTesting(String)}
+		 * Scope : Global
+		 * Process : Confirms existence of local errors.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Existence [{@link Boolean}] of local errors
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定したユニットのエラー有無を確認するためのアドレス.
 		 * アドレス : {@link ServiceAddress.User#errorTesting(String)}
 		 * 範囲 : グローバル
@@ -472,11 +794,20 @@ public class ServiceAddress {
 		}
 	}
 	/**
+	 * Carries out unified management of {@link io.vertx.core.eventbus.EventBus} addresses used by Mediator service.
+	 * @author OES Project
 	 * Mediator サービスで使用する {@link io.vertx.core.eventbus.EventBus} アドレスの一元管理.
 	 * @author OES Project
 	 */
 	public static class Mediator {
 		/**
+		 * Address to process requests issued by User service.
+		 * Scope : Local
+		 * Process : Receives request from own unit and executes Power Sharing deal.
+		 * Message body : request information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header : None
+		 * Response : deploymentID [{@link String}]
+		 * @return address string
 		 * User サービスが発したリクエストを処理するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 自ユニットからリクエストを受け取り融通交渉を実行する.
@@ -489,6 +820,16 @@ public class ServiceAddress {
 			return "apis.Mediator.internalRequest";
 		}
 		/**
+		 * Address to process request from another unit.
+		 * Scope : Global
+		 * Process : Receives request request from another unit and sends accept to address.
+		 * 　　   Does not send if not accepted.
+		 * 　　   Accept creation is relayed to User service.
+		 * Message body : request information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header :
+		 * 　　　　　　　　   - {@code "replyAddress"} : address to reply acceptance to
+		 * Response : None
+		 * @return address string
 		 * 他ユニットからのリクエストを処理するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 他ユニットからリクエストを受け取り指定されたアドレスに対しアクセプトを送る.
@@ -504,6 +845,14 @@ public class ServiceAddress {
 			return "apis.Mediator.externalRequest";
 		}
 		/**
+		 * Address to get list of Power Sharing information
+		 * Scope : Global
+		 * Process : Gets list of Power Sharing information.
+		 * Message body : None
+		 * Message header : None
+		 * Response : List of Power Sharing information [{@link io.vertx.core.json.JsonArray JsonArray}] managed in shared memory.
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 融通情報リストを取得するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 融通情報リストを取得する.
@@ -517,6 +866,15 @@ public class ServiceAddress {
 			return "apis.Mediator.deals";
 		}
 		/**
+		 * Address to register materialized Power Sharing.
+		 * Scope : Global
+		 * Process : Registers Power Sharing information.Registers 
+		 * Message body : Power Sharing information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header : None
+		 * Response : Created Power Sharing information [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if failed.
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 成立した融通を登録するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 融通情報を登録する.
@@ -531,6 +889,14 @@ public class ServiceAddress {
 			return "apis.Mediator.deal.create";
 		}
 		/**
+		 * Address to delete Power Sharing
+		 * Scope : Local
+		 * Process : Deletes Power Sharing information.
+		 * Message body : Power Sharing ID [{@link String}]
+		 * Message header : None
+		 * Response : Deleted Power Sharing informationPower Sharing information [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 融通を削除するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : 融通情報を削除する.
@@ -544,6 +910,16 @@ public class ServiceAddress {
 			return "apis.Mediator.deal.dispose";
 		}
 		/**
+		 * Address to request stopping Power Sharing
+		 * Scope : Global
+		 * Process : Sends request to stop Power Sharing.
+		 * Message body : Stop request [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * 　　　　　　　　   - {@code "dealId"} : Power Sharing ID
+		 * 　　　　　　　　   - {@code "reasons"} : List of reasons [{@link io.vertx.core.json.JsonArray JsonArray}]
+		 * Message header : None
+		 * Response : Power Sharing ID [{@link String}]
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 融通停止要求のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 融通停止要求を送信する.
@@ -559,6 +935,21 @@ public class ServiceAddress {
 			return "apis.Mediator.deal.needToStop";
 		}
 		/**
+		 * Address to register Power Sharing
+		 * Scope : Global.
+		 * Process : Registers Power Sharing.
+		 * 　　   - apis-main : Saves to file system if own unit participates in received Power Sharing.
+		 * 　　                 ignores if own unit does not participate in received Power Sharing.
+		 * 　　   - apis-ccc : Reports Power Sharing information to Service Center.
+		 * Message body : Power Sharing information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header : None
+		 * Response :
+		 * 　　　　　   - apis-main : Own unit ID [{@link String}] if own unit participates in received Power Sharing.
+		 * 　　　　　                 {@code "N/A"} if own unit does not participate in received Power Sharing.
+		 * 　　　　　   - apis-ccc : {@code "ok"} if reporting function is enabled.
+		 * 　　　　　                {@code "N/A"} if reporting function is not enabled.
+		 * 　　　　　   - Fail if error occurs.
+		 * @return address string
 		 * 融通を記録するためのアドレス.
 		 * 範囲 : グローバル.
 		 * 処理 : 融通を記録する.
@@ -579,6 +970,17 @@ public class ServiceAddress {
 			return "apis.Mediator.deal.log";
 		}
 		/**
+		 * Address for GridMaster interlock function
+		 * Scope : Local
+		 * Process : Secures/releases GridMaster interlock.
+		 * Message body : GridMaster unit ID [{@link String}]
+		 * Message header :
+		 * 　　　　　　　　   - {@code "command"}
+		 * 　　　　　　　　     - {@code "acquire"} : Secures interlock
+		 * 　　　　　　　　     - {@code "release"} : Releases interlock
+		 * Response : Own unit ID [{@link String}]
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * GridMaster インタロック機能のためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : GridMaster インタロックを確保/解放する.
@@ -595,6 +997,18 @@ public class ServiceAddress {
 			return "apis.Mediator.interlock.gridMaster";
 		}
 		/**
+		 * Address for interlock function of Power Sharing specified by ID.
+		 * Scope : Global
+		 * Process : Secures/releases Power Sharing interlock.
+		 * Message body : Power Sharing information [{@link io.vertx.core.json.JsonObject JsonObject}]
+		 * Message header :
+		 * 　　　　　　　　   - {@code "command"}
+		 * 　　　　　　　　     - {@code "acquire"} : Secures interlock
+		 * 　　　　　　　　     - {@code "release"} : Releases interlock
+		 * Response : Own unit ID [{@link String}]
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定した融通インタロック機能のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 融通インタロックを確保/解放する.
@@ -612,6 +1026,17 @@ public class ServiceAddress {
 			return "apis." + unitId + ".Mediator.interlock.deal";
 		}
 		/**
+		 * Address to establish GridMaster in appropriate unit.
+		 * Scope : Local
+		 * Process : Maintains existence of GridMaster.
+		 * 　　   Confirms existence.
+		 * 　　   Confirms place of existence.
+		 * 　　   Moves to appropriate unit.
+		 * Message body : None
+		 * Message header : None
+		 * Response : ID [{@link String}] of unit in which GridMaster exists.
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * 適切なユニットに GridMaster を立てておく機能のためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : GridMaster の存在メンテナンス.
@@ -628,6 +1053,15 @@ public class ServiceAddress {
 			return "apis.Mediator.gridMaster.ensure";
 		}
 		/**
+		 * Address to launch GridMaster specified by ID.
+		 * Scope : Global
+		 * Process : Starts GridMaster.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Own unit ID [{@link String}].
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定した GridMaster 起動のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : GridMaster を起動する.
@@ -642,6 +1076,15 @@ public class ServiceAddress {
 			return "apis." + unitId + ".Mediator.gridMaster.activate";
 		}
 		/**
+		 * Address to stop GridMaster specified by ID.
+		 * Scope : Global
+		 * Process : Stops GridMaster.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Own unit ID [{@link String}].
+		 * 　　　　　   Fail if error occurs.
+		 * @param unitId ID of target unit
+		 * @return address string
 		 * ID を指定した GridMaster 停止のためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : GridMaster を停止する.
@@ -657,11 +1100,24 @@ public class ServiceAddress {
 		}
 	}
 	/**
+	 * Carries out unified management of {@link io.vertx.core.eventbus.EventBus} addresses used by GridMaster service.
+	 * @author OES Project
 	 * GridMaster サービスで使用する {@link io.vertx.core.eventbus.EventBus} アドレスの一元管理.
 	 * @author OES Project
 	 */
 	public static class GridMaster {
 		/**
+		 * Address for use in technique to ensure that there are no duplicate Gridmasters in the cluster.
+		 * Scope : Global
+		 * Process : Technique to ensure that there are no duplicate Gridmasters.
+		 * 　　   Returns unit ID of own unit if message body is empty ( because it is inquiry of GM unit ID).
+		 * 　　   If there is message body and it matches own {@link io.vertx.core.AbstractVerticle#deploymentID()}, then ignores (because it is own self).
+		 * 　　   Global error if there is message body and it does not match own {@link io.vertx.core.AbstractVerticle#deploymentID()} ( because it means another GM exists).
+		 * Message body : Sender Verticle の {@link io.vertx.core.AbstractVerticle#deploymentID()} [{@link String}]
+		 * Message header : None
+		 * Response : ID [{@link String}] of own unit if message body is empty.
+		 * 　　　　　   In all other cases, returns nothing.
+		 * @return address string
 		 * クラスタ内に GridMaster が重複しないための仕組みで使用するアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : GridMaster が重複しないための仕組み.
@@ -678,6 +1134,15 @@ public class ServiceAddress {
 			return "apis.GridMaster.helo";
 		}
 		/**
+		 * Address to get all units' unit data, which GridMaster periodically refreshes and caches.
+		 * Scope : Global
+		 * Process : gets all units' unit data.
+		 * 　　   Returns cache values periodically refreshed by GridMaster.
+		 * Message body : None
+		 * Message header : None
+		 * Response : all units' unit data [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * GridMaster が定期的にリフレッシュしてキャッシュしている全ユニットのユニットデータを取得するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 全ユニットのユニットデータを取得する.
@@ -692,6 +1157,18 @@ public class ServiceAddress {
 			return "apis.GridMaster.data.all";
 		}
 		/**
+		 * Address to immediately collect all units' unit data by GridMaster
+		 * Address : {@link ServiceAddress.GridMaster#urgentUnitDatas()}
+		 * Scope : Local
+		 * Process : Gets all units' unit data.
+		 * 　　   Inquires all units and returns collected result instead of values periodically refreshed and cached by GridMaster.
+		 * 　　   Returns cache without collecting data if most recent data collection is newer than time stamp sent in message body.
+		 *      Cached data that is periodically refreshed in each unit is gathered because urgent is not specified in the header at the time of collection.
+		 * Message body : Timestamp [{@link Number}] for which collection is unnecessary if collection time is newer
+		 * Message header : None
+		 * Response : all units' unit data [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * GridMaster が全ユニットのユニットデータを今すぐ収集するためのアドレス.
 		 * アドレス : {@link ServiceAddress.GridMaster#urgentUnitDatas()}
 		 * 範囲 : ローカル
@@ -709,6 +1186,15 @@ public class ServiceAddress {
 			return "apis.GridMaster.data.all.urgent";
 		}
 		/**
+		 * Address to get list of ID of all units from GridMaster.
+		 * Scope : Global
+		 * Process : Gets list of ID of all units.
+		 * 　　   Gets list of ID from POLICY.
+		 * Message body : None
+		 * Message header : None
+		 * Response : List of ID of all units [{@link io.vertx.core.json.JsonArray JsonArray}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * GridMaster から全ユニットの ID リストを取得するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : 全ユニットの ID リストを取得する.
@@ -723,6 +1209,13 @@ public class ServiceAddress {
 			return "apis.GridMaster.unitId.all";
 		}
 		/**
+		 * Address to confirm existence of global errors.
+		 * Scope : Global
+		 * Process : Confirms existence of global errors.
+		 * Message body : None
+		 * Message header : None
+		 * Response : existence of global error [{@link Boolean}]
+		 * @return address string
 		 * グローバルエラーの有無を確認するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : グローバルエラーの有無を確認する.
@@ -735,6 +1228,14 @@ public class ServiceAddress {
 			return "apis.GridMaster.error.test";
 		}
 		/**
+		 * Address to stop GridMaster.
+		 * Scope : Local
+		 * Process : Stops GridMaster.
+		 * Message body : None
+		 * Message header : None
+		 * Response : Own unit ID [{@link String}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * GridMaster を停止するためのアドレス.
 		 * 範囲 : ローカル
 		 * 処理 : GridMaster を停止する.
@@ -750,11 +1251,25 @@ public class ServiceAddress {
 	}
 
 	/**
+	 * Carries out unified management of {@link io.vertx.core.eventbus.EventBus} addresses used by apis-ccc's ControlCenterClient service.
+	 * @author OES Project
 	 * apis-ccc の ControlCenterClient サービスで使用する {@link io.vertx.core.eventbus.EventBus} アドレスの一元管理.
 	 * @author OES Project
 	 */
 	public static class ControlCenterClient {
 		/**
+		 * Address to get SCENARIO from Service Center.
+		 * Scope : Global
+		 * Process : Gets SCENARIO from Service Center.
+		 * 　　   account, password, unitId are required.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "account"} : Account
+		 * 　　　　　　　　   - {@code "password"} : Password
+		 * 　　　　　　　　   - {@code "unitId"} : Unit ID
+		 * Response : Acquired SCENARIO information [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * Service Center から SCENARIO を取得するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : Service Center から SCENARIO を取得する.
@@ -772,6 +1287,18 @@ public class ServiceAddress {
 			return "apis.ControlCenterClient.scenario";
 		}
 		/**
+		 * Address to get POLICY from Service Center.
+		 * Scope : Global
+		 * Process : Gets POLICY from Service Center.
+		 * 　　   account, password, unitId are required.
+		 * Message body : None
+		 * Message header :
+		 * 　　　　　　　　   - {@code "account"} : Account
+		 * 　　　　　　　　   - {@code "password"} : Password
+		 * 　　　　　　　　   - {@code "unitId"} : Unit ID
+		 * Response : Acquired POLICY policy [{@link io.vertx.core.json.JsonObject JsonObject}].
+		 * 　　　　　   Fail if error occurs.
+		 * @return address string
 		 * Service Center から POLICY を取得するためのアドレス.
 		 * 範囲 : グローバル
 		 * 処理 : Service Center から POLICY を取得する.

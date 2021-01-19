@@ -142,6 +142,9 @@ public class FileSystemExclusiveLockUtilTest {
 //				System.out.println("res.succeeded() : " + res.succeeded());
 //				System.out.println("res.result() : " + res.result());
 //				throw new RuntimeException("hoge");
+//				// This exception is unfortunately caught not by try-catch here, but by try-catch surrounding completionHandler.handle(resAcquireLock); in FileSystemExclusiveLockUtil#lock()
+//				// So this lambda is called infinitely many times
+//				// And res from the second time onward fails
 //				// この例外はここに見える try-catch ではなく FileSystemExclusiveLockUtil#lock() 中の completionHandler.handle(resAcquireLock); を囲む try-catch に捕まえられてしまう
 //				// なのでこのラムダは何度でも無限に呼び出されてしまう
 //				// そして二回目以降の res は failed である
